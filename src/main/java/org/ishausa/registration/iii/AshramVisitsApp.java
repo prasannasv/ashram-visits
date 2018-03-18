@@ -71,7 +71,7 @@ public class AshramVisitsApp {
 
     private AshramVisitsApp() throws ConnectionException {
         final SalesforceAuthenticator authenticator = new SalesforceAuthenticator();
-        connection = null; //authenticator.login();
+        connection = authenticator.login();
     }
 
     public static void main(final String[] args) throws ConnectionException {
@@ -179,9 +179,6 @@ public class AshramVisitsApp {
     }
 
     private String getProgramName(final EnterpriseConnection connection, final String programId) {
-        if ("a0A0G00000UQRNH".equals(programId)) {
-            return "Samyama";
-        }
         if (!Strings.isNullOrEmpty(programId)) {
             try {
                 final QueryResult result =

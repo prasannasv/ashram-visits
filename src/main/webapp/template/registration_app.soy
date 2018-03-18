@@ -48,22 +48,23 @@
       <div class="starter-template">
         <h2>{$programName}</h2>
 
-        <div id="section_search">
+        <!-- Search page -->
+        <div class="section section_search hidden">
           <div class="row">
             <div class="btn-container col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
 
               <div>
-                Type name or number: <input type="text" id="currentSearch" autofocus></input>
-                <button class="btn-u" onclick="javascript:$('#currentSearch').val('');filterNameButtons('');$('#currentSearch').focus();" type="button">Clear</button>
+                Search by name or number: <input type="text" id="currentSearch" autofocus></input>&nbsp;
+                <button class="btn-u" onclick="javascript:$('#currentSearch').val('');ashramVisits.filterNameButtons('');$('#currentSearch').focus();" type="button">Clear</button>
               </div>
 
-              <div id="search_results"></div>
+              <div class="search_results"></div>
             </div>
           </div>
         </div>
 
-
-        <div id="section_details" class="hidden">
+        <!-- Program Participant & Ashram Visit Details page -->
+        <div class="section section_details hidden" class="hidden">
           <form class="reg-page" id="edit_visit_info">
 
             <input name="Id" type="hidden">
@@ -92,7 +93,6 @@
       </div>
     </div><!-- /.container -->
 
-
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
@@ -109,6 +109,10 @@
 
     <!-- http://1000hz.github.io/bootstrap-validator/ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/1000hz-bootstrap-validator/0.11.9/validator.min.js"></script>
+
+    <!-- Browser App -->
+    <script type="text/javascript" src="/js/ashram_visits.js"></script>
+
   </body>
 </html>
 {/template}
