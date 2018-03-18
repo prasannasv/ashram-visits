@@ -3,7 +3,6 @@
 /**
  * Ashram Visit information for a given Program Id
  *
- * @param ashramVisits - the list of ashram visit info
  * @param programName - the name of the program
  */
 {template .index}
@@ -49,31 +48,47 @@
       <div class="starter-template">
         <h2>{$programName}</h2>
 
-        <form action="/" method="POST" data-toggle="validator" role="form">
-          <table class="table table-striped">
-            <tr>
-              <th>Select</th>
-              <th>Name</th>
-              <th>Visitor Name</th>
-              <th>Visit Purpose</th>
-              <th>Visit Date</th>
-              <th>Accommodation</th>
-            </tr>
-            {foreach $ashramVisit in $ashramVisits}
-            <tr>
-              <td>
-                <input type="checkbox" class="form-control">
-              </td>
-              <td>{$ashramVisit['name']}</td>
-              <td>{$ashramVisit['visitorName']}</td>
-              <td>{$ashramVisit['visitPurpose']}</td>
-              <td>{$ashramVisit['visitDate']}</td>
-              <td>{$ashramVisit['accommodation']}</td>
-            </tr>
-            {/foreach}
-          </table>
-          <input class="button" type="submit" value="Assign Accommodation">
-        </form>
+        <div id="section_search">
+          <div class="row">
+            <div class="btn-container col-md-6 col-md-offset-3 col-sm-8 col-sm-offset-2">
+
+              <div>
+                Type name or number: <input type="text" id="currentSearch" autofocus></input>
+                <button class="btn-u" onclick="javascript:$('#currentSearch').val('');filterNameButtons('');$('#currentSearch').focus();" type="button">Clear</button>
+              </div>
+
+              <div id="search_results"></div>
+            </div>
+          </div>
+        </div>
+
+
+        <div id="section_details" class="hidden">
+          <form class="reg-page" id="edit_visit_info">
+
+            <input name="Id" type="hidden">
+
+            <label>Name</label>
+            <input name="Name" type="text" class="form-control margin-bottom-20" readonly><br/>
+
+            <input name="Checked_in__c" type="checkbox" class="form-control"> <label>Checked In</label><br/>
+
+            <label>Departure Date Meal Option</label>
+            <select name="Sathsang_Ishanga__c" id="meal_option_select" style="display:block"></select><br/>
+
+            <label>Batch Number</label>
+            <input name="Name" type="text" class="form-control margin-bottom-20"><br/>
+
+            <hr>
+
+            <div class="row">
+              <div class="col-lg-6 text-right">
+                <button id="edit_visit_info_submit" class="btn-u">Save</button>
+                <button id="edit_visit_info_back" onclick="javascript:$('#section_search').show(); $('#section_details').addClass('hidden'); return false;">Back to Check in</button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div><!-- /.container -->
 
@@ -116,105 +131,6 @@
       <strong>Failure!</strong> Unable to locate record for program with the id: {$id}.
     </div>
   </section>
-</body>
-</html>
-{/template}
-
-/**
- * On a successful payment for the program, show this.
- *
- * @param childFullName
- * @param transactionId
- */
-{template .payment_success}
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Payment for Children's Program</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-</head>
-<body>
-  <section class="container">
-    <div class="alert alert-success">
-      <strong>Success!</strong> Payment towards {$childFullName}'s registration for the program was successfully processed.
-      Please note your transaction id for future reference: {$transactionId}.
-    </div>
-  </section>
-</body>
-</html>
-{/template}
-
-/**
- * On a failed payment for the program, show this.
- *
- * @param childFullName
- * @param longMessage
- */
-{template .payment_failure}
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Payment for Children's Program</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-</head>
-<body>
-  <section class="container">
-    <div class="alert alert-danger">
-      <strong>Failure!</strong> Payment towards {$childFullName}'s registration for the program failed.
-      Reason: {$longMessage}.
-    </div>
-  </section>
-</body>
-</html>
-{/template}
-
-/**
- * When looking up a participant whose payment was already processed successfully.
- *
- * @param childFullName
- * @param parentsFullName
- * @param parentsEmail
- * @param amount
- * @param paymentDate
- * @param transactionId
- */
-{template .payment_already_processed}
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Payment for Children's Program</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-</head>
-<body>
-
-  <div class="container">
-    <div class="alert alert-success">
-      <strong>Success!</strong> Payment towards {$childFullName}'s registration for the program was successfully processed.
-    </div>
-
-    <table class="table table-striped table-bordered table-sm table-responsive">
-      <tr>
-        <td>Parent's Name</td>
-        <td>{$parentsFullName}</td>
-      </tr>
-      <tr>
-        <td>Parent's Email</td>
-        <td>{$parentsEmail}</td>
-      </tr>
-      <tr>
-        <td>Payment Amount</td>
-        <td>${$amount}.00</td>
-      </tr>
-      <tr>
-        <td>Payment Date</td>
-        <td>{$paymentDate}</td>
-      </tr>
-      <tr>
-        <td>Transaction Id</td>
-        <td>{$transactionId}</td>
-      </tr>
-    </table>
-  </div>
 </body>
 </html>
 {/template}
