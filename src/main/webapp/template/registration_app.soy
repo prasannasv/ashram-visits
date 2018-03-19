@@ -70,11 +70,18 @@
           <form class="reg-page" id="edit_visit_info">
 
             <input name="Id" type="hidden">
-
-            <label>Name</label>
-            <input name="VisitorName" type="text" class="form-control margin-bottom-20" readonly><br/>
-
-            <input name="Checked_In__c" type="checkbox" class="form-control"> <label>Checked In?</label><br/>
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label">Name</label>
+              <div class="col-sm-6">
+                <input name="VisitorName" type="text" class="form-control-static" readonly>
+              </div>
+            </div>
+            <div class="form-group row">
+              <label class="col-sm-4 col-form-label">Has Checked In?</label>
+              <div class="col-sm-6">
+                <input name="Checked_In__c" type="checkbox" class="form-control-static">
+              </div>
+            </div>
 
             <hr>
 
