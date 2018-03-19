@@ -42,7 +42,7 @@ Javascript on load calls /api/participants and /api/visits
 GET /api/participants?pgm_id=<program id>
 GET /api/visits?pgm_id=<program id>
 
-POST /api/participant/check_in
+POST /api/participant/visit
 <BODY>
 pgm_part_id=
 checked_in=
