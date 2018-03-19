@@ -6,7 +6,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.SerializedName;
 import com.sforce.soap.enterprise.EnterpriseConnection;
 import com.sforce.soap.enterprise.QueryResult;
 import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
@@ -15,6 +14,10 @@ import com.sforce.soap.enterprise.sobject.Program__c;
 import com.sforce.soap.enterprise.sobject.SObject;
 import com.sforce.ws.ConnectionException;
 import org.ishausa.registration.iii.http.NameValuePairs;
+import org.ishausa.registration.iii.model.AshramVisitInfo;
+import org.ishausa.registration.iii.model.ProgramParticipantRecord;
+import org.ishausa.registration.iii.model.Status;
+import org.ishausa.registration.iii.model.StatusCode;
 import org.ishausa.registration.iii.renderer.SoyRenderer;
 import org.ishausa.registration.iii.security.HttpsEnforcer;
 import spark.Request;
@@ -26,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static spark.Spark.before;
 import static spark.Spark.exception;
@@ -139,9 +143,9 @@ public class AshramVisitsApp {
         final String programId = request.queryParams("pgm_id");
         final List<Program_Contact_Relation__c> participants = getParticipantsForProgram(connection, programId);
         final Stopwatch stopwatch = Stopwatch.createStarted();
-        final String json = GSON.toJson(participants);
+        final String json = GSON.toJson(participants.stream().map(ProgramParticipantRecord::new).collect(Collectors.toList()));
         final long translationTimeMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-        log.info("Json transformation time: " + translationTimeMillis);
+        log.info("Json transformation time (in ms): " + translationTimeMillis);
         return json;
     }
 
@@ -150,9 +154,9 @@ public class AshramVisitsApp {
         final String programId = request.queryParams("pgm_id");
         final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForProgram(connection, programId);
         final Stopwatch stopwatch = Stopwatch.createStarted();
-        final String json = GSON.toJson(ashramVisits);
+        final String json = GSON.toJson(ashramVisits.stream().map(AshramVisitInfo::new).collect(Collectors.toList()));
         final long translationTimeMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-        log.info("Json transformation time: " + translationTimeMillis);
+        log.info("Json transformation time (in ms): " + translationTimeMillis);
         return json;
     }
 
@@ -203,7 +207,7 @@ public class AshramVisitsApp {
         final String content = request.body();
         final Map<String, List<String>> params = NameValuePairs.splitParams(content);
         // Validate input
-        final String ashramVisitId = NameValuePairs.nullSafeGetFirst(params, "Id");
+        final String ashramVisitId = NameValuePairs.nullSafeGetFirst(params, "id");
         if (Strings.isNullOrEmpty(ashramVisitId)) {
             return GSON.toJson(new Status(StatusCode.FAILURE, "Request is missing ashram visit id param"));
         }
@@ -213,7 +217,7 @@ public class AshramVisitsApp {
         // the other fields need to be updated only in the Ashram Visit object that corresponds to the program dates.
         final Ashram_Visit_information__c visitInfo = new Ashram_Visit_information__c();
         visitInfo.setId(ashramVisitId);
-        final String checkedInStatus = NameValuePairs.nullSafeGetFirst(params, "Checked_In__c");
+        final String checkedInStatus = NameValuePairs.nullSafeGetFirst(params, "hasCheckedIn");
         visitInfo.setChecked_In__c("true".equals(checkedInStatus));
         log.info("About to save ashram visit info for id: " + ashramVisitId + " with check in status: " + visitInfo.getChecked_In__c());
         connection.update(new Ashram_Visit_information__c[] {visitInfo});
@@ -221,23 +225,4 @@ public class AshramVisitsApp {
         return GSON.toJson(new Status(StatusCode.OK, ""));
     }
 
-    enum StatusCode {
-        OK,
-        FAILURE,
-    }
-
-    private class Status {
-        private StatusCode status;
-        @SerializedName("status_message")
-        private String statusMessage;
-
-        Status() {
-            // for gson
-        }
-
-        Status(StatusCode code, String statusMessage) {
-            this.status = code;
-            this.statusMessage = statusMessage;
-        }
-    }
 }
