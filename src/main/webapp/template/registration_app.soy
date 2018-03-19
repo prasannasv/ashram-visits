@@ -55,7 +55,7 @@
 
               <div>
                 Search by name or number: <input type="text" id="currentSearch" autofocus></input>&nbsp;
-                <button class="btn-u" onclick="javascript:$('#currentSearch').val('');ashramVisits.filterNameButtons('');$('#currentSearch').focus();" type="button">Clear</button>
+                <button type="button" class="btn btn-warning" onclick="javascript:$('#currentSearch').val('');ashramVisits.filterNameButtons('');$('#currentSearch').focus();" type="button">Clear</button>
               </div>
               <br>
               <hr>
@@ -72,22 +72,16 @@
             <input name="Id" type="hidden">
 
             <label>Name</label>
-            <input name="Name" type="text" class="form-control margin-bottom-20" readonly><br/>
+            <input name="VisitorName" type="text" class="form-control margin-bottom-20" readonly><br/>
 
-            <input name="Checked_in__c" type="checkbox" class="form-control"> <label>Checked In</label><br/>
-
-            <label>Departure Date Meal Option</label>
-            <select name="Sathsang_Ishanga__c" id="meal_option_select" style="display:block"></select><br/>
-
-            <label>Batch Number</label>
-            <input name="Name" type="text" class="form-control margin-bottom-20"><br/>
+            <input name="Checked_In__c" type="checkbox" class="form-control"> <label>Checked In?</label><br/>
 
             <hr>
 
             <div class="row">
               <div class="col-lg-6 text-right">
-                <button id="edit_visit_info_submit" class="btn-u">Save</button>
-                <button id="edit_visit_info_back" onclick="javascript:$('#section_search').show(); $('#section_details').addClass('hidden'); return false;">Back to Check in</button>
+                <button type="button" id="edit_visit_info_submit" class="btn btn-primary">Save</button>
+                <button type="button" id="edit_visit_info_back" class="btn btn-secondary" onclick="javascript:ashramVisits.render('#search'); return false;">Back to Check in</button>
               </div>
             </div>
           </form>

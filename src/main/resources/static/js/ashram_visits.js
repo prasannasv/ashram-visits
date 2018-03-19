@@ -25,6 +25,7 @@ var ashramVisits = (function() {
 
     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
       $.each(data, function(i, value) {
+        value['VisitorName'] = value['VisitorName__r']['Name'];
         cachedAshramVisitsPerParticipant[value.VisitorName__c] = value;
       });
       console.log("fetched ashram visits successfully");
@@ -73,10 +74,42 @@ var ashramVisits = (function() {
     // show the ashram visit details for the specified contact in the second page
     var ashramVisitInfo = cachedAshramVisitsPerParticipant[contactId];
     if (ashramVisitInfo) {
-      console.log("Found ashram visit info for contact id as " + JSON.stringify(ashramVisitInfo));
+      fillFormFields('edit_visit_info', ashramVisitInfo);
+      render('#details');
     } else {
       console.warn("no ashram visit info found for contact id: " + contactId);
     }
+  }
+
+  function fillFormFields(formId, data) {
+    var formObj = $(`#${formId}`);
+    $.each(data, function(key, value) {
+      var ctrl = $('[name=' + key + ']', formObj);
+      switch (ctrl.attr("type")) {
+        case "text":
+        case "hidden":
+          ctrl.val(value);
+          break;
+        case "bool":
+          ctrl.html(value ? "Yes" : "No");
+          break;
+        case "span":
+          ctrl.html(value);
+          break;
+        case "checkbox":
+          ctrl.prop("checked", value);
+          break;
+        case "radio":
+          ctrl.each(function() {
+            if ($(this).attr('value') == value) {
+              $(this).attr("checked", value);
+            }
+          });
+          break;
+        default:
+          ctrl.val(value);
+      }
+    });
   }
 
   function render(url, alert = null) {
@@ -89,11 +122,15 @@ var ashramVisits = (function() {
     var map = {
       // The Homepage.
       '': function() {
-          render('#search');
+        render('#search');
       },
 
       '#search': function() {
-          $(".section_search").removeClass("hidden");
+        $(".section_search").removeClass("hidden");
+      },
+
+      '#details': function() {
+        $(".section_details").removeClass("hidden");
       }
     };
 
@@ -108,6 +145,7 @@ var ashramVisits = (function() {
   }
 
   return {
-    filterNameButtons: filterNameButtons
+    filterNameButtons: filterNameButtons,
+    render: render
   };
 })();
