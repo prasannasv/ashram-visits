@@ -1,6 +1,7 @@
 var ashramVisits = (function() {
   var cachedParticipants;
-  var cachedAshramVisitsPerParticipant;
+  var cachedAshramVisitsPerParticipant = {};
+  var posting = false;
 
   $(document).ready(function() {
     render(window.location.hash);
@@ -25,7 +26,8 @@ var ashramVisits = (function() {
 
     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
       $.each(data, function(i, value) {
-        cachedAshramVisitsPerParticipant[value.VisitorName__r.Id] = value;
+        value['VisitorName'] = value['VisitorName__r']['Name'];
+        cachedAshramVisitsPerParticipant[value.VisitorName__c] = value;
       });
       console.log("fetched ashram visits successfully");
     });
@@ -73,10 +75,105 @@ var ashramVisits = (function() {
     // show the ashram visit details for the specified contact in the second page
     var ashramVisitInfo = cachedAshramVisitsPerParticipant[contactId];
     if (ashramVisitInfo) {
-      console.log("Found ashram visit info for contact id as " + JSON.stringify(ashramVisitInfo));
+      fillFormFields('edit_visit_info', ashramVisitInfo);
+      render('#details');
     } else {
       console.warn("no ashram visit info found for contact id: " + contactId);
     }
+  }
+
+  /**
+   * Saves the current values of section_details view in the Ashram Visits info object.
+   */
+  function save() {
+    if (posting) {
+      return;
+    }
+    posting = true;
+    var visitInfo = getFormData('edit_visit_info');
+    console.log("Posting with params: " + JSON.stringify(visitInfo));
+
+    var jqxhr = $.post('/api/participant/visit', visitInfo);
+    jqxhr.done(function(data) {
+      console.log("received response for POST: " + JSON.stringify(data));
+
+      if (data.status === "OK") {
+        alerts.showSuccessMsg("Successfully updated Ashram Visit information.");
+      } else {
+        if (data.status_message && data.status_message.length > 0) {
+          alerts.showWarningMsg(data.status_message);
+        }
+      }
+    });
+
+    jqxhr.fail(function() {
+      parseAjaxFailureMessageAndAlert(jqxhr);
+    });
+    posting = false;
+  }
+
+  function parseAjaxFailureMessageAndAlert(jqxhr) {
+    if (jqxhr && jqxhr.responseText && jqxhr.responseText.length > 0) {
+      var contentType = jqxhr.getResponseHeader("content-type") || "";
+      if (contentType.indexOf('json') > -1) {
+        var data = $.parseJSON(jqxhr.responseText || "");
+        if (data.status_message) {
+          alerts.showWarningMsg(data.status_message);
+        } else {
+          alerts.showWarningMsg(jqxhr.responseText);
+        }
+      } else {
+        alerts.showWarningMsg(jqxhr.responseText);
+      }
+    } else {
+      alerts.showWarningMsg("Failed to submit. Please try again.");
+    }
+  }
+
+  function fillFormFields(formId, data) {
+    var formObj = $(`#${formId}`);
+    $.each(data, function(key, value) {
+      var ctrl = $('[name=' + key + ']', formObj);
+      switch (ctrl.attr("type")) {
+        case "text":
+        case "hidden":
+          ctrl.val(value);
+          break;
+        case "bool":
+          ctrl.html(value ? "Yes" : "No");
+          break;
+        case "span":
+          ctrl.html(value);
+          break;
+        case "checkbox":
+          ctrl.prop("checked", value);
+          break;
+        case "radio":
+          ctrl.each(function() {
+            if ($(this).attr('value') == value) {
+              $(this).attr("checked", value);
+            }
+          });
+          break;
+        default:
+          ctrl.val(value);
+      }
+    });
+  }
+
+  function getFormData(formId) {
+    var selector = `#${formId} input, #${formId} select, #${formId} textarea`;
+    var formData = {};
+
+    $(selector).each(function(index, n) {
+      if (n.type == "checkbox") {
+        formData[n.name] = $(n).prop('checked');
+      } else {
+       formData[n.name] = $(n).val();
+      }
+    });
+
+    return formData;
   }
 
   function render(url, alert = null) {
@@ -89,11 +186,15 @@ var ashramVisits = (function() {
     var map = {
       // The Homepage.
       '': function() {
-          render('#search');
+        render('#search');
       },
 
       '#search': function() {
-          $(".section_search").removeClass("hidden");
+        $(".section_search").removeClass("hidden");
+      },
+
+      '#details': function() {
+        $(".section_details").removeClass("hidden");
       }
     };
 
@@ -103,11 +204,17 @@ var ashramVisits = (function() {
     }
 
     if (alert != null) {
-      showMsg(alert.message, alert.kind, 3000);
+      if (alert.kind === "success") {
+        alerts.showSuccessMsg(alert.message);
+      } else {
+        alerts.showWarningMsg(alert.message);
+      }
     }
   }
 
   return {
-    filterNameButtons: filterNameButtons
+    filterNameButtons: filterNameButtons,
+    render: render,
+    save: save
   };
 })();

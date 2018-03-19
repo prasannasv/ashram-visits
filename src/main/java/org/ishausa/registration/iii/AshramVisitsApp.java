@@ -5,6 +5,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
 import com.sforce.soap.enterprise.EnterpriseConnection;
 import com.sforce.soap.enterprise.QueryResult;
 import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
@@ -12,6 +13,7 @@ import com.sforce.soap.enterprise.sobject.Program_Contact_Relation__c;
 import com.sforce.soap.enterprise.sobject.Program__c;
 import com.sforce.soap.enterprise.sobject.SObject;
 import com.sforce.ws.ConnectionException;
+import org.ishausa.registration.iii.http.NameValuePairs;
 import org.ishausa.registration.iii.renderer.SoyRenderer;
 import org.ishausa.registration.iii.security.HttpsEnforcer;
 import spark.Request;
@@ -19,6 +21,7 @@ import spark.Response;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,6 +29,7 @@ import static spark.Spark.before;
 import static spark.Spark.exception;
 import static spark.Spark.get;
 import static spark.Spark.port;
+import static spark.Spark.post;
 import static spark.Spark.staticFiles;
 
 /**
@@ -84,6 +88,8 @@ public class AshramVisitsApp {
         get("/", app::handleGet);
         get("/api/participants", app::getParticipantsForProgram);
         get("/api/visits", app::getAshramVisitsForProgram);
+
+        post("/api/participant/visit", app::updateVisitInfo);
 
         exception(Exception.class, ((exception, request, response) -> {
             log.info("Exception: " + exception + " stack: " + Throwables.getStackTraceAsString(exception));
@@ -164,7 +170,7 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, VisitorName__r.Id, VisitorName__r.Name, Checked_In__c " +
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
@@ -176,5 +182,48 @@ public class AshramVisitsApp {
             log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for programId: " + programId, e);
         }
         return ashramVisits;
+    }
+
+    private String updateVisitInfo(final Request request, final Response response) throws ConnectionException {
+        response.header("Content-Type", "application/json");
+        final String content = request.body();
+        final Map<String, List<String>> params = NameValuePairs.splitParams(content);
+        // Validate input
+        final String ashramVisitId = NameValuePairs.nullSafeGetFirst(params, "Id");
+        if (Strings.isNullOrEmpty(ashramVisitId)) {
+            return GSON.toJson(new Status(StatusCode.FAILURE, "Request is missing ashram visit id param"));
+        }
+
+        // a participant may have multiple Ashram Visits around the program.
+        // the check in status needs to be updated in all of them. TODO: Prasanna
+        // the other fields need to be updated only in the Ashram Visit object that corresponds to the program dates.
+        final Ashram_Visit_information__c visitInfo = new Ashram_Visit_information__c();
+        visitInfo.setId(ashramVisitId);
+        final String checkedInStatus = NameValuePairs.nullSafeGetFirst(params, "Checked_In__c");
+        visitInfo.setChecked_In__c("true".equals(checkedInStatus));
+        log.info("About to save ashram visit info for id: " + ashramVisitId + " with check in status: " + visitInfo.getChecked_In__c());
+        connection.update(new Ashram_Visit_information__c[] {visitInfo});
+
+        return GSON.toJson(new Status(StatusCode.OK, ""));
+    }
+
+    enum StatusCode {
+        OK,
+        FAILURE,
+    }
+
+    private class Status {
+        private StatusCode status;
+        @SerializedName("status_message")
+        private String statusMessage;
+
+        Status() {
+            // for gson
+        }
+
+        Status(StatusCode code, String statusMessage) {
+            this.status = code;
+            this.statusMessage = statusMessage;
+        }
     }
 }
