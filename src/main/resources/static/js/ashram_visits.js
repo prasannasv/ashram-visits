@@ -26,8 +26,7 @@ var ashramVisits = (function() {
 
     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
       $.each(data, function(i, value) {
-        value['VisitorName'] = value['VisitorName__r']['Name'];
-        cachedAshramVisitsPerParticipant[value.VisitorName__c] = value;
+        cachedAshramVisitsPerParticipant[value.participantId] = value;
       });
       console.log("fetched ashram visits successfully");
     });
@@ -36,8 +35,8 @@ var ashramVisits = (function() {
       var listGroupHtml = '<div class="list-group">';
 
       $.each(cachedParticipants, function(i, value) {
-        listGroupHtml += '<a id="' + value.Participant__r.Id + '" href="#" class="list-group-item list-group-item-action">' +
-          toTitleCase(value.Participant__r.FirstName + ' ' + value.Participant__r.LastName) +
+        listGroupHtml += '<a id="' + value.participantId + '" href="#" class="list-group-item list-group-item-action">' +
+          toTitleCase(value.participantFirstName + ' ' + value.participantLastName) + ' (' + toTitleCase(value.sathsangCenterName) + ')' +
           '</a>';
       });
       listGroupHtml += '</div>';
@@ -59,7 +58,7 @@ var ashramVisits = (function() {
   function setGroupItemClassPerCheckInStatus() {
     $(".active").removeClass("active");
     $.each(cachedAshramVisitsPerParticipant, function(key, value) {
-      if (value["Checked_In__c"]) {
+      if (value["hasCheckedIn"]) {
         $(".search_results #" + key).addClass("active");
       }
     });
@@ -111,7 +110,7 @@ var ashramVisits = (function() {
 
       if (data.status === "OK") {
         alerts.showSuccessMsg("Successfully updated Ashram Visit information.");
-        var participantId = visitInfo["VisitorName__c"];
+        var participantId = visitInfo["participantId"];
         //console.log("Ashram visit info for participant id: " + participantId + " is: " + JSON.stringify(cachedAshramVisitsPerParticipant[participantId]));
         cachedAshramVisitsPerParticipant[participantId] = visitInfo;
         //console.log("Updated that with " + JSON.stringify(visitInfo));
