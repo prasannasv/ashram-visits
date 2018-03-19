@@ -3,8 +3,8 @@ package org.ishausa.registration.iii;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.template.soy.data.SoyListData;
-import com.google.template.soy.data.SoyMapData;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sforce.soap.enterprise.EnterpriseConnection;
 import com.sforce.soap.enterprise.QueryResult;
 import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
@@ -66,6 +66,7 @@ import static spark.Spark.staticFiles;
  */
 public class AshramVisitsApp {
     private static final Logger log = Logger.getLogger(AshramVisitsApp.class.getName());
+    private static final Gson GSON = new GsonBuilder().create();
 
     private final EnterpriseConnection connection;
 
@@ -81,6 +82,8 @@ public class AshramVisitsApp {
         staticFiles.location("/static");
 
         get("/", app::handleGet);
+        get("/api/participants", app::getParticipantsForProgram);
+        get("/api/visits", app::getAshramVisitsForProgram);
 
         exception(Exception.class, ((exception, request, response) -> {
             log.info("Exception: " + exception + " stack: " + Throwables.getStackTraceAsString(exception));
@@ -108,35 +111,33 @@ public class AshramVisitsApp {
         }
     }
 
-    private SoyListData participantsToSoyData(final List<Program_Contact_Relation__c> participants) {
-        final SoyListData listData = new SoyListData();
-
-        for (final Program_Contact_Relation__c participant : participants) {
-            final SoyMapData soyMapData = new SoyMapData();
-            soyMapData.put("id", participant.getId());
-            soyMapData.put("name", participant.getName());
-            listData.add(soyMapData);
+    private String getProgramName(final EnterpriseConnection connection, final String programId) {
+        if (!Strings.isNullOrEmpty(programId)) {
+            try {
+                final QueryResult result =
+                        connection.query("SELECT Name FROM Program__c WHERE Id = '" + programId + "'");
+                if (result.getRecords().length > 0) {
+                    return ((Program__c) result.getRecords()[0]).getName();
+                }
+            } catch (final ConnectionException e) {
+                log.log(Level.SEVERE, "Exception querying Program__c for programId: " + programId, e);
+            }
         }
-
-        return listData;
+        return null;
     }
 
-    private SoyListData ashramVisitsToSoyData(final List<Ashram_Visit_information__c> ashramVisits) {
-        final SoyListData listData = new SoyListData();
+    private String getParticipantsForProgram(final Request request, final Response response) {
+        response.header("Content-Type", "application/json");
+        final String programId = request.queryParams("pgm_id");
+        final List<Program_Contact_Relation__c> participants = getParticipantsForProgram(connection, programId);
+        return GSON.toJson(participants);
+    }
 
-        for (final Ashram_Visit_information__c ashramVisit : ashramVisits) {
-            final SoyMapData soyMapData = new SoyMapData();
-            soyMapData.put("id", ashramVisit.getId());
-            soyMapData.put("name", ashramVisit.getName());
-            soyMapData.put("checkedIn", ashramVisit.getChecked_In__c() ? "yes" : "no");
-            soyMapData.put("visitorName", ashramVisit.getVisitorName__r().getName());
-            soyMapData.put("visitPurpose", ashramVisit.getVisit_Purpose__c());
-            soyMapData.put("visitDate", SoyRenderer.calendarToString(ashramVisit.getVisit_Date__c()));
-            soyMapData.put("accommodation", ashramVisit.getAccommodation__r() != null ? ashramVisit.getAccommodation__r().getName() : "UNASSIGNED");
-            listData.add(soyMapData);
-        }
-
-        return listData;
+    private String getAshramVisitsForProgram(final Request request, final Response response) {
+        response.header("Content-Type", "application/json");
+        final String programId = request.queryParams("pgm_id");
+        final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForProgram(connection, programId);
+        return GSON.toJson(ashramVisits);
     }
 
     private List<Program_Contact_Relation__c> getParticipantsForProgram(final EnterpriseConnection connection,
@@ -144,8 +145,7 @@ public class AshramVisitsApp {
         final List<Program_Contact_Relation__c> participants = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, Name, Campus_Checkin__c, Campus_Checkin_By__c, Campus_Checkin_Time__c, Checked_In__c, " +
-                            "Checkout_Meal_Selection__c, Valuables_Scanned__c, Valuables_Scan_Time__c " +
+                    "SELECT Id, Participant__c, Participant__r.Id, Participant__r.FirstName, Participant__r.LastName, Participant__r.Sathsang_Center__r.Name " +
                             "FROM Program_Contact_Relation__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
@@ -164,7 +164,7 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, Name, Checked_In__c, VisitorName__r.Name, Visit_Purpose__c, Visit_Date__c, Accommodation__r.Name " +
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
@@ -176,20 +176,5 @@ public class AshramVisitsApp {
             log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for programId: " + programId, e);
         }
         return ashramVisits;
-    }
-
-    private String getProgramName(final EnterpriseConnection connection, final String programId) {
-        if (!Strings.isNullOrEmpty(programId)) {
-            try {
-                final QueryResult result =
-                        connection.query("SELECT Name FROM Program__c WHERE Id = '" + programId + "'");
-                if (result.getRecords().length > 0) {
-                    return ((Program__c) result.getRecords()[0]).getName();
-                }
-            } catch (final ConnectionException e) {
-                log.log(Level.SEVERE, "Exception querying Program__c for programId: " + programId, e);
-            }
-        }
-        return null;
     }
 }

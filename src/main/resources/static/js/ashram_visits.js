@@ -15,26 +15,60 @@ var ashramVisits = (function() {
       filterNameButtons($(this).val());
     });
 
-    $.get("/api/participants", function(data) {
+    let params = (new URL(document.location)).searchParams;
+    let programId = params.get("id");
+
+    var fetchParticipantsTask = $.get("/api/participants?pgm_id=" + programId, function(data) {
       cachedParticipants = data;
+      console.log("fetched participants successfully");
     });
 
-    $.get("/api/visits", function(data) {
+    var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
       cachedAshramVisits = data;
+      console.log("fetched ashram visits successfully");
     });
 
+    $.when(fetchParticipantsTask, fetchVisitsInfoTask).done(function() {
+      var listGroupHtml = '<div class="list-group">';
+
+      $.each(cachedParticipants, function(i, value) {
+        listGroupHtml += '<a id="' + value.Participant__r.Id + '" href="#" class="list-group-item list-group-item-action">' +
+          toTitleCase(value.Participant__r.FirstName + ' ' + value.Participant__r.LastName) +
+          '</a>';
+      });
+      listGroupHtml += '</div>'
+
+      $(".search_results").html(listGroupHtml);
+      filterNameButtons('');
+      $('.search_results .list-group-item').click(function() {
+        renderParticipantDetails($(this).attr('id'));
+      });
+
+      $(".btn-container").removeClass("hidden");
+      console.log('done calling both');
+    });
   });
+
+  function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+  }
 
   function filterNameButtons(currentSearch) {
     $(".search_results a").hide();
     if (currentSearch.length > 2) {
-      var searchPattern = new RegExp('^' + currentSearch, 'i');
+      var searchString = currentSearch.toLowerCase();
       $(".search_results a").each(function(index, value) {
-        if (searchPattern.test($(this).text())) {
+        if ($(this).text().toLowerCase().indexOf(searchString) != -1) {
           $(this).show();
         };
       });
     }
+  }
+
+  function renderParticipantDetails(contactId) {
+    // show the ashram visit details for the specified contact in the second page
   }
 
   function render(url, alert = null) {
@@ -64,5 +98,8 @@ var ashramVisits = (function() {
       showMsg(alert.message, alert.kind, 3000);
     }
   }
-})();
 
+  return {
+    filterNameButtons: filterNameButtons
+  };
+})();
