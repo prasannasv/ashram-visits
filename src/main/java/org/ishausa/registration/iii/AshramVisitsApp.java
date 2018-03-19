@@ -1,5 +1,6 @@
 package org.ishausa.registration.iii;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -22,6 +23,7 @@ import spark.Response;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -136,18 +138,27 @@ public class AshramVisitsApp {
         response.header("Content-Type", "application/json");
         final String programId = request.queryParams("pgm_id");
         final List<Program_Contact_Relation__c> participants = getParticipantsForProgram(connection, programId);
-        return GSON.toJson(participants);
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        final String json = GSON.toJson(participants);
+        final long translationTimeMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        log.info("Json transformation time: " + translationTimeMillis);
+        return json;
     }
 
     private String getAshramVisitsForProgram(final Request request, final Response response) {
         response.header("Content-Type", "application/json");
         final String programId = request.queryParams("pgm_id");
         final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForProgram(connection, programId);
-        return GSON.toJson(ashramVisits);
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        final String json = GSON.toJson(ashramVisits);
+        final long translationTimeMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        log.info("Json transformation time: " + translationTimeMillis);
+        return json;
     }
 
     private List<Program_Contact_Relation__c> getParticipantsForProgram(final EnterpriseConnection connection,
                                                                         final String programId) {
+        final Stopwatch stopwatch = Stopwatch.createStarted();
         final List<Program_Contact_Relation__c> participants = new ArrayList<>();
         try {
             final String query =
@@ -155,6 +166,7 @@ public class AshramVisitsApp {
                             "FROM Program_Contact_Relation__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
+            log.info("getParticipants query execution time (in ms): " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
             for (final SObject record : queryResult.getRecords()) {
                 participants.add((Program_Contact_Relation__c) record);
@@ -167,6 +179,7 @@ public class AshramVisitsApp {
 
     private List<Ashram_Visit_information__c> getAshramVisitsForProgram(final EnterpriseConnection connection,
                                                                         final String programId) {
+        final Stopwatch stopwatch = Stopwatch.createStarted();
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
@@ -174,6 +187,7 @@ public class AshramVisitsApp {
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
+            log.info("getAshramVisits query execution time (in ms): " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
             for (final SObject record : queryResult.getRecords()) {
                 ashramVisits.add((Ashram_Visit_information__c) record);
