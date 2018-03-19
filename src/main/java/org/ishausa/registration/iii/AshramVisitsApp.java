@@ -145,7 +145,7 @@ public class AshramVisitsApp {
         final List<Program_Contact_Relation__c> participants = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, Participant__c, Participant__r.Id, Participant__r.FirstName, Participant__r.LastName, Participant__r.Sathsang_Center__r.Name " +
+                    "SELECT Id, Participant__r.Id, Participant__r.FirstName, Participant__r.LastName, Participant__r.Sathsang_Center__r.Name " +
                             "FROM Program_Contact_Relation__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
@@ -164,7 +164,7 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c " +
+                    "SELECT Id, VisitorName__r.Id, VisitorName__r.Name, Checked_In__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);

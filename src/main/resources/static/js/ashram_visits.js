@@ -1,6 +1,6 @@
 var ashramVisits = (function() {
   var cachedParticipants;
-  var cachedAshramVisits;
+  var cachedAshramVisitsPerParticipant;
 
   $(document).ready(function() {
     render(window.location.hash);
@@ -24,7 +24,9 @@ var ashramVisits = (function() {
     });
 
     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
-      cachedAshramVisits = data;
+      $.each(data, function(i, value) {
+        cachedAshramVisitsPerParticipant[value.VisitorName__r.Id] = value;
+      });
       console.log("fetched ashram visits successfully");
     });
 
@@ -69,6 +71,12 @@ var ashramVisits = (function() {
 
   function renderParticipantDetails(contactId) {
     // show the ashram visit details for the specified contact in the second page
+    var ashramVisitInfo = cachedAshramVisitsPerParticipant[contactId];
+    if (ashramVisitInfo) {
+      console.log("Found ashram visit info for contact id as " + JSON.stringify(ashramVisitInfo));
+    } else {
+      console.warn("no ashram visit info found for contact id: " + contactId);
+    }
   }
 
   function render(url, alert = null) {
