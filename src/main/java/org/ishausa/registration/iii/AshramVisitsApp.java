@@ -164,7 +164,7 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, VisitorName__r.Id, VisitorName__r.Name, Checked_In__c " +
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);

@@ -1,6 +1,6 @@
 var ashramVisits = (function() {
   var cachedParticipants;
-  var cachedAshramVisitsPerParticipant;
+  var cachedAshramVisitsPerParticipant = {};
 
   $(document).ready(function() {
     render(window.location.hash);
@@ -25,7 +25,7 @@ var ashramVisits = (function() {
 
     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
       $.each(data, function(i, value) {
-        cachedAshramVisitsPerParticipant[value.VisitorName__r.Id] = value;
+        cachedAshramVisitsPerParticipant[value.VisitorName__c] = value;
       });
       console.log("fetched ashram visits successfully");
     });
