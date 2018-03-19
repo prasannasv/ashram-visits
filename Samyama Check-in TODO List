@@ -1,0 +1,52 @@
+[] GET /?id=<program id> should return Page 1 and the list of all program participant relationship id, participant name, number & check-in status
+[] Page 1 should show a form that asks for name or number
+[] Page 1's javascript should create buttons with participant names and color as blue if they have already checked-in and plain otherwise. All the buttons should be hidden to begin with.
+[] Page 1's javascript should listen for key type events and hide / show buttons with participant names that has any of the letters specified in the search
+[] Page 1's buttons should be clickable and the action on click should hide the search form and show them the page 2 for the participant based on the program participant relationship id
+ - to do this, it will do a GET on /api/check_in?pgm_part_id=<program participant id>
+[] Page 2 will show all the fields of the participant and have a button to Save and another button called Back to Check in
+[] Back to Check in button will disable page 2 and enable page 1's div
+[] Save button will call POST /api/check_in with body containing all the form params. Once saved, a status gets sent back which will be shown in the alert div. Type is based on status of the call.
+[] Searching by number in Page 1 should do the same filtering but instead by the number
+[] Page 1 should have a Clear button that clears the content of the input fields and takes the control to the name input field
+[] Gate it behind login
+
+Database Queries
+* Query to get the program participant relationship info given a program id
+* Query to update the checkin status on a Ashram Visit info entity
+* Query to update various columns in Ashram Visit info table
+
+UI Layouts
+Check in page
+<header>
+<form>
+<search key>
+<search results section>
+<footer>
+
+Program Participant & Ashram Visit details page
+<header>
+<form>
+<participant details>
+<save button>
+<back to check in button>
+<footer>
+
+Business Logic
+
+APIs
+GET /?id=<program id>
+Returns the search form with program name
+Javascript on load calls /api/participants and /api/visits
+
+GET /api/participants?pgm_id=<program id>
+GET /api/visits?pgm_id=<program id>
+
+POST /api/participant/check_in
+<BODY>
+pgm_part_id=
+checked_in=
+meal_option=
+batch_number=
+waiver_signed=
+...

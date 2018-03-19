@@ -3,11 +3,12 @@ package org.ishausa.registration.iii;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.template.soy.data.SoyListData;
-import com.google.template.soy.data.SoyMapData;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sforce.soap.enterprise.EnterpriseConnection;
 import com.sforce.soap.enterprise.QueryResult;
 import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
+import com.sforce.soap.enterprise.sobject.Program_Contact_Relation__c;
 import com.sforce.soap.enterprise.sobject.Program__c;
 import com.sforce.soap.enterprise.sobject.SObject;
 import com.sforce.ws.ConnectionException;
@@ -35,10 +36,37 @@ import static spark.Spark.staticFiles;
  * The user can then select a set of participants and then click on "Assign Lodges" button to
  * assign / re-assign the lodge details. After that, the updated information is again rendered.
  *
+ * Update: Mar 2018.
+ * Going to reuse this for Samyama check-in. The process is as below:
+ * 1. Participant arrives to iii potentially several days before the program.
+ * 2. Before entering the visitor center, we give them a waiver form & card for each participant in the car to fill their
+ *  a. name,
+ *  b. city and state,
+ *  c. the meal option on their departure date
+ * 3. Once filled, the volunteer collects and comes to the tent where we search for each of them by name,
+ *  a. ensure they have registered for the program
+ *  b. ensure they have paid for the stay from current date till beginning of program
+ * 4. If all good, we will mark the participant as checked-in in the Ashram Visit info corresponding to the program dates.
+ * 5. We will also update the departure date meal option, waiver status as signed and name tag status as collected.
+ * 6. If someone is already checked-in, we will show the screen that allows one to modify/view
+ *  * batch number
+ *  * departure date (view only)
+ *  * departure date meal option,
+ *  * waiver signed,
+ *  * name tag status
+ *  * number (view only)
+ *  * number tag tray location (view only)
+ *  * medical screening status
+ *  * valuables deposit status
+ *  * hall location number
+ * 7. One can search by either partial first/last name or the program number.
+ * 8. Search should be efficient (we will preload the list of all participants and their ashram visit info in the browser app after login)
+ *
  * Created by Prasanna Venkat on 6/25/2017.
  */
 public class AshramVisitsApp {
     private static final Logger log = Logger.getLogger(AshramVisitsApp.class.getName());
+    private static final Gson GSON = new GsonBuilder().create();
 
     private final EnterpriseConnection connection;
 
@@ -54,6 +82,8 @@ public class AshramVisitsApp {
         staticFiles.location("/static");
 
         get("/", app::handleGet);
+        get("/api/participants", app::getParticipantsForProgram);
+        get("/api/visits", app::getAshramVisitsForProgram);
 
         exception(Exception.class, ((exception, request, response) -> {
             log.info("Exception: " + exception + " stack: " + Throwables.getStackTraceAsString(exception));
@@ -73,52 +103,12 @@ public class AshramVisitsApp {
 
         final String programName = getProgramName(connection, programId);
         if (!Strings.isNullOrEmpty(programId) && !Strings.isNullOrEmpty(programName)) {
-            // get Ashram Visit information for the given program id
-            final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForProgram(connection, programId);
-
-            final SoyListData ashramVisitsSoyData = toSoyData(ashramVisits);
             return SoyRenderer.INSTANCE.render(SoyRenderer.RegistrationAppTemplate.INDEX,
-                    ImmutableMap.of("ashramVisits", ashramVisitsSoyData, "programName", programName));
+                    ImmutableMap.of("programName", programName));
         } else {
             return SoyRenderer.INSTANCE.render(SoyRenderer.RegistrationAppTemplate.NON_EXISTENT_ID,
                     ImmutableMap.of("id", Strings.nullToEmpty(programId)));
         }
-    }
-
-    private SoyListData toSoyData(final List<Ashram_Visit_information__c> ashramVisits) {
-        final SoyListData listData = new SoyListData();
-
-        for (final Ashram_Visit_information__c ashramVisit : ashramVisits) {
-            final SoyMapData soyMapData = new SoyMapData();
-            soyMapData.put("id", ashramVisit.getId());
-            soyMapData.put("name", ashramVisit.getName());
-            soyMapData.put("visitorName", ashramVisit.getVisitorName__r().getName());
-            soyMapData.put("visitPurpose", ashramVisit.getVisit_Purpose__c());
-            soyMapData.put("visitDate", SoyRenderer.calendarToString(ashramVisit.getVisit_Date__c()));
-            soyMapData.put("accommodation", ashramVisit.getAccommodation__r() != null ? ashramVisit.getAccommodation__r().getName() : "UNASSIGNED");
-            listData.add(soyMapData);
-        }
-
-        return listData;
-    }
-
-    private List<Ashram_Visit_information__c> getAshramVisitsForProgram(final EnterpriseConnection connection,
-                                                                        final String programId) {
-        final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
-        try {
-            final String query =
-                    "SELECT Id, Name, VisitorName__r.Name, Visit_Purpose__c, Visit_Date__c, Accommodation__r.Name " +
-                            "FROM Ashram_Visit_information__c " +
-                            "WHERE Program__c = '" + programId + "'";
-            final QueryResult queryResult = connection.query(query);
-
-            for (final SObject record : queryResult.getRecords()) {
-                ashramVisits.add((Ashram_Visit_information__c) record);
-            }
-        } catch (final ConnectionException e) {
-            log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for programId: " + programId, e);
-        }
-        return ashramVisits;
     }
 
     private String getProgramName(final EnterpriseConnection connection, final String programId) {
@@ -134,5 +124,57 @@ public class AshramVisitsApp {
             }
         }
         return null;
+    }
+
+    private String getParticipantsForProgram(final Request request, final Response response) {
+        response.header("Content-Type", "application/json");
+        final String programId = request.queryParams("pgm_id");
+        final List<Program_Contact_Relation__c> participants = getParticipantsForProgram(connection, programId);
+        return GSON.toJson(participants);
+    }
+
+    private String getAshramVisitsForProgram(final Request request, final Response response) {
+        response.header("Content-Type", "application/json");
+        final String programId = request.queryParams("pgm_id");
+        final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForProgram(connection, programId);
+        return GSON.toJson(ashramVisits);
+    }
+
+    private List<Program_Contact_Relation__c> getParticipantsForProgram(final EnterpriseConnection connection,
+                                                                        final String programId) {
+        final List<Program_Contact_Relation__c> participants = new ArrayList<>();
+        try {
+            final String query =
+                    "SELECT Id, Participant__r.Id, Participant__r.FirstName, Participant__r.LastName, Participant__r.Sathsang_Center__r.Name " +
+                            "FROM Program_Contact_Relation__c " +
+                            "WHERE Program__c = '" + programId + "'";
+            final QueryResult queryResult = connection.query(query);
+
+            for (final SObject record : queryResult.getRecords()) {
+                participants.add((Program_Contact_Relation__c) record);
+            }
+        } catch (final ConnectionException e) {
+            log.log(Level.SEVERE, "Exception querying Program_Contact_Relation__c for programId: " + programId, e);
+        }
+        return participants;
+    }
+
+    private List<Ashram_Visit_information__c> getAshramVisitsForProgram(final EnterpriseConnection connection,
+                                                                        final String programId) {
+        final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
+        try {
+            final String query =
+                    "SELECT Id, VisitorName__r.Id, VisitorName__r.Name, Checked_In__c " +
+                            "FROM Ashram_Visit_information__c " +
+                            "WHERE Program__c = '" + programId + "'";
+            final QueryResult queryResult = connection.query(query);
+
+            for (final SObject record : queryResult.getRecords()) {
+                ashramVisits.add((Ashram_Visit_information__c) record);
+            }
+        } catch (final ConnectionException e) {
+            log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for programId: " + programId, e);
+        }
+        return ashramVisits;
     }
 }
