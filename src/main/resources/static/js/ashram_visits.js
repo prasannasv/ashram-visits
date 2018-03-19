@@ -40,7 +40,7 @@ var ashramVisits = (function() {
           toTitleCase(value.Participant__r.FirstName + ' ' + value.Participant__r.LastName) +
           '</a>';
       });
-      listGroupHtml += '</div>'
+      listGroupHtml += '</div>';
 
       $(".search_results").html(listGroupHtml);
       filterNameButtons('');
@@ -48,10 +48,22 @@ var ashramVisits = (function() {
         renderParticipantDetails($(this).attr('id'));
       });
 
+      setGroupItemClassPerCheckInStatus();
+
+      $("#progress").addClass("hidden");
       $(".btn-container").removeClass("hidden");
       console.log('done calling both');
     });
   });
+
+  function setGroupItemClassPerCheckInStatus() {
+    $(".active").removeClass("active");
+    $.each(cachedAshramVisitsPerParticipant, function(key, value) {
+      if (value["Checked_In__c"]) {
+        $(".search_results #" + key).addClass("active");
+      }
+    });
+  }
 
   function toTitleCase(str) {
     return str.replace(/\w\S*/g, function(txt) {
@@ -99,6 +111,11 @@ var ashramVisits = (function() {
 
       if (data.status === "OK") {
         alerts.showSuccessMsg("Successfully updated Ashram Visit information.");
+        var participantId = visitInfo["VisitorName__c"];
+        //console.log("Ashram visit info for participant id: " + participantId + " is: " + JSON.stringify(cachedAshramVisitsPerParticipant[participantId]));
+        cachedAshramVisitsPerParticipant[participantId] = visitInfo;
+        //console.log("Updated that with " + JSON.stringify(visitInfo));
+        setGroupItemClassPerCheckInStatus();
       } else {
         if (data.status_message && data.status_message.length > 0) {
           alerts.showWarningMsg(data.status_message);
