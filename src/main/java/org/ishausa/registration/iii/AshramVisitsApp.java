@@ -187,7 +187,11 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c " +
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c, Samyama_Baggage_Screened__c, " +
+                            "Samyama_Batch_Number__c, Samyama_Departure_Date_Meal_Option__c, " +
+                            "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
+                            "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
+                            "Samyama_Waiver_Signed__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Program__c = '" + programId + "'";
             final QueryResult queryResult = connection.query(query);
@@ -217,12 +221,31 @@ public class AshramVisitsApp {
         // the other fields need to be updated only in the Ashram Visit object that corresponds to the program dates.
         final Ashram_Visit_information__c visitInfo = new Ashram_Visit_information__c();
         visitInfo.setId(ashramVisitId);
-        final String checkedInStatus = NameValuePairs.nullSafeGetFirst(params, "hasCheckedIn");
-        visitInfo.setChecked_In__c("true".equals(checkedInStatus));
-        log.info("About to save ashram visit info for id: " + ashramVisitId + " with check in status: " + visitInfo.getChecked_In__c());
+        visitInfo.setChecked_In__c(getBoolean(params, "hasCheckedIn"));
+        visitInfo.setSamyama_Waiver_Signed__c(getBoolean(params, "hasSignedWaiver"));
+        visitInfo.setSamyama_Departure_Date_Meal_Option__c(NameValuePairs.nullSafeGetFirst(params, "departureDateMealOption"));
+        visitInfo.setSamyama_Name_Tag_Collected__c(getBoolean(params, "hasCollectedNameTag"));
+        visitInfo.setSamyama_Baggage_Screened__c(getBoolean(params, "isBaggageScreened"));
+        visitInfo.setSamyama_Done_Medical_Screening__c(getBoolean(params, "doneMedicalScreening"));
+        visitInfo.setSamyama_Valuables_Collected__c(getBoolean(params, "isValuablesCollected"));
+
+        log.info("About to save ashram visit info for id: " + ashramVisitId +
+                " with check in status: " + visitInfo.getChecked_In__c() +
+                ", hasSignedWaiver: " + visitInfo.getSamyama_Waiver_Signed__c() +
+                ", departureDateMealOption: " + visitInfo.getSamyama_Departure_Date_Meal_Option__c() +
+                ", hasCollectedNameTag: " + visitInfo.getSamyama_Name_Tag_Collected__c() +
+                ", isBaggageScreened: " + visitInfo.getSamyama_Baggage_Screened__c() +
+                ", doneMedicalScreening: " + visitInfo.getSamyama_Done_Medical_Screening__c() +
+                ", isValuablesCollected: " + visitInfo.getSamyama_Valuables_Collected__c()
+        );
+
         connection.update(new Ashram_Visit_information__c[] {visitInfo});
+        log.info("Saved successfully");
 
         return GSON.toJson(new Status(StatusCode.OK, ""));
     }
 
+    private Boolean getBoolean(final Map<String, List<String>> params, final String fieldName) {
+        return "true".equals(NameValuePairs.nullSafeGetFirst(params, fieldName));
+    }
 }
