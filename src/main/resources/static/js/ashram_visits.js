@@ -86,10 +86,15 @@ var ashramVisits = (function() {
     // show the ashram visit details for the specified contact in the second page
     var ashramVisitInfo = cachedAshramVisitsPerParticipant[contactId];
     if (ashramVisitInfo) {
-      fillFormFields('edit_visit_info', ashramVisitInfo);
-      render('#details');
+      if (ashramVisitInfo.needsToPayForStay) {
+        alerts.showWarningMsg("Payment for stay not done for the entire duration of the stay. Please direct them to a separate counter to resolve this.");
+      } else {
+        fillFormFields('edit_visit_info', ashramVisitInfo);
+        render('#details');
+      }
     } else {
       console.warn("no ashram visit info found for contact id: " + contactId);
+      alerts.showWarningMsg("Unable to locate ashram visit info for contact. Please refresh the page and try again and if problem persists, direct them to a separate counter to resolve this.");
     }
   }
 

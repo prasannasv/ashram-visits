@@ -187,8 +187,8 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Checked_In__c, Samyama_Baggage_Screened__c, " +
-                            "Samyama_Batch_Number__c, Samyama_Departure_Date_Meal_Option__c, " +
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
+                            "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date_Meal_Option__c, " +
                             "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
                             "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
                             "Samyama_Waiver_Signed__c " +
@@ -216,6 +216,7 @@ public class AshramVisitsApp {
             return GSON.toJson(new Status(StatusCode.FAILURE, "Request is missing ashram visit id param"));
         }
 
+        // todo check if the needsToPayForStay is not set.
         // a participant may have multiple Ashram Visits around the program.
         // the check in status needs to be updated in all of them. TODO: Prasanna
         // the other fields need to be updated only in the Ashram Visit object that corresponds to the program dates.
