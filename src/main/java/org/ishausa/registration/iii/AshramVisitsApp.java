@@ -24,6 +24,7 @@ import spark.Request;
 import spark.Response;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -220,8 +221,15 @@ public class AshramVisitsApp {
         // a participant may have multiple Ashram Visits around the program.
         // the check in status needs to be updated in all of them. TODO: Prasanna
         // the other fields need to be updated only in the Ashram Visit object that corresponds to the program dates.
+        final List<String> fieldsToNull = new ArrayList<>();
         final Ashram_Visit_information__c visitInfo = new Ashram_Visit_information__c();
         visitInfo.setId(ashramVisitId);
+        final String batchNumber = NameValuePairs.nullSafeGetFirst(params, "batchNumber");
+        if (!Strings.isNullOrEmpty(batchNumber)) {
+            visitInfo.setSamyama_Batch_Number__c(batchNumber);
+        } else {
+            fieldsToNull.add("Samyama_Batch_Number__c");
+        }
         visitInfo.setChecked_In__c(getBoolean(params, "hasCheckedIn"));
         visitInfo.setSamyama_Waiver_Signed__c(getBoolean(params, "hasSignedWaiver"));
         visitInfo.setSamyama_Departure_Date_Meal_Option__c(NameValuePairs.nullSafeGetFirst(params, "departureDateMealOption"));
@@ -229,15 +237,25 @@ public class AshramVisitsApp {
         visitInfo.setSamyama_Baggage_Screened__c(getBoolean(params, "isBaggageScreened"));
         visitInfo.setSamyama_Done_Medical_Screening__c(getBoolean(params, "doneMedicalScreening"));
         visitInfo.setSamyama_Valuables_Collected__c(getBoolean(params, "isValuablesCollected"));
+        final String hallLocation = NameValuePairs.nullSafeGetFirst(params, "hallLocation");
+        if (!Strings.isNullOrEmpty(hallLocation)) {
+            visitInfo.setSamyama_Hall_Location__c(hallLocation);
+        } else {
+            fieldsToNull.add("Samyama_Hall_Location__c");
+        }
 
+        visitInfo.setFieldsToNull(fieldsToNull.toArray(new String[] {}));
         log.info("About to save ashram visit info for id: " + ashramVisitId +
                 " with check in status: " + visitInfo.getChecked_In__c() +
+                ", batchNumber: " + visitInfo.getSamyama_Batch_Number__c() +
                 ", hasSignedWaiver: " + visitInfo.getSamyama_Waiver_Signed__c() +
                 ", departureDateMealOption: " + visitInfo.getSamyama_Departure_Date_Meal_Option__c() +
                 ", hasCollectedNameTag: " + visitInfo.getSamyama_Name_Tag_Collected__c() +
                 ", isBaggageScreened: " + visitInfo.getSamyama_Baggage_Screened__c() +
                 ", doneMedicalScreening: " + visitInfo.getSamyama_Done_Medical_Screening__c() +
-                ", isValuablesCollected: " + visitInfo.getSamyama_Valuables_Collected__c()
+                ", hallLocation: " + visitInfo.getSamyama_Hall_Location__c() +
+                ", isValuablesCollected: " + visitInfo.getSamyama_Valuables_Collected__c() +
+                ", fieldsToNull: " + Arrays.asList(visitInfo.getFieldsToNull())
         );
 
         connection.update(new Ashram_Visit_information__c[] {visitInfo});
