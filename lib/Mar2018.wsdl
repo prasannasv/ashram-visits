@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 Salesforce.com Enterprise Web Services API Version 42.0
-Generated on 2018-03-20 04:44:32 +0000.
+Generated on 2018-03-24 23:42:56 +0000.
 
 Package Versions:
 ExportToExcel (Version: 1.6, Namespace: rkexporttoexcel)
@@ -1327,6 +1327,7 @@ All Rights Reserved
                         <element name="Volunteering_Activity__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="What_motivated_your_visit_to_iii_today__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="iATS_Transactions__r" nillable="true" minOccurs="0" type="tns:QueryResult"/>
+                        <element name="samyama_PaymentFlag__c" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         </sequence>
                     </extension>
                 </complexContent>
@@ -18334,6 +18335,9 @@ All Rights Reserved
                     </enumeration>
                     <enumeration value="FLOW_NAME_USED_IN_OTHER_CLIENT">
                         <xsd:annotation><xsd:documentation>Errors with this extended error code have the following properties: flowName</xsd:documentation></xsd:annotation>
+                    </enumeration>
+                    <enumeration value="FLOW_STAGE_INCLUDES_REFERENCES">
+                        <xsd:annotation><xsd:documentation>Errors with this extended error code have the following properties: stageName</xsd:documentation></xsd:annotation>
                     </enumeration>
                     <enumeration value="FORMULA_EXPRESSION_INVALID">
                         <xsd:annotation><xsd:documentation>Errors with this extended error code have the following properties: formulaExpression</xsd:documentation></xsd:annotation>

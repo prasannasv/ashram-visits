@@ -10,6 +10,8 @@ public class AshramVisitInfo {
     private String participantId;
     private String participantName;
 
+    private Boolean needsToPayForStay;
+
     private Boolean hasCheckedIn;
     private Boolean hasSignedWaiver;
     private Boolean hasCollectedNameTag;
@@ -32,6 +34,8 @@ public class AshramVisitInfo {
         this.id = sfObject.getId();
         this.participantId = sfObject.getVisitorName__c();
         this.participantName = sfObject.getVisitorName__r().getName();
+
+        this.needsToPayForStay = sfObject.getSamyama_PaymentFlag__c();
 
         this.hasCheckedIn = sfObject.getChecked_In__c();
         this.hasSignedWaiver = sfObject.getSamyama_Waiver_Signed__c();
