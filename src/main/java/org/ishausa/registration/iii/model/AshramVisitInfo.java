@@ -38,6 +38,9 @@ public class AshramVisitInfo {
     public AshramVisitInfo(final Ashram_Visit_information__c sfObject) {
         this.id = sfObject.getId();
         this.participantId = sfObject.getVisitorName__c();
+        if (sfObject.getVisitorName__r() == null) {
+            throw new NullPointerException("visitorName isn't set for ashram visit with id: " + sfObject.getId());
+        }
         this.participantName = sfObject.getVisitorName__r().getName();
 
         this.needsToPayForStay = sfObject.getSamyama_PaymentFlag__c();
