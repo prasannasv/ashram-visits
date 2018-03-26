@@ -23,8 +23,12 @@ import org.ishausa.registration.iii.security.HttpsEnforcer;
 import spark.Request;
 import spark.Response;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -189,7 +193,8 @@ public class AshramVisitsApp {
         try {
             final String query =
                     "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
-                            "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date_Meal_Option__c, " +
+                            "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date__c, " +
+                            "Samyama_Departure_Date_Meal_Option__c, " +
                             "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
                             "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
                             "Samyama_Waiver_Signed__c " +
@@ -232,6 +237,10 @@ public class AshramVisitsApp {
         }
         visitInfo.setChecked_In__c(getBoolean(params, "hasCheckedIn"));
         visitInfo.setSamyama_Waiver_Signed__c(getBoolean(params, "hasSignedWaiver"));
+        final String departureDate = NameValuePairs.nullSafeGetFirst(params, "departureDate");
+        final Calendar departureDateCal = Calendar.getInstance();
+        departureDateCal.setTime(Date.from(LocalDate.parse(departureDate).atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        visitInfo.setSamyama_Departure_Date__c(departureDateCal);
         visitInfo.setSamyama_Departure_Date_Meal_Option__c(NameValuePairs.nullSafeGetFirst(params, "departureDateMealOption"));
         visitInfo.setSamyama_Name_Tag_Collected__c(getBoolean(params, "hasCollectedNameTag"));
         visitInfo.setSamyama_Baggage_Screened__c(getBoolean(params, "isBaggageScreened"));
@@ -249,6 +258,7 @@ public class AshramVisitsApp {
                 " with check in status: " + visitInfo.getChecked_In__c() +
                 ", batchNumber: " + visitInfo.getSamyama_Batch_Number__c() +
                 ", hasSignedWaiver: " + visitInfo.getSamyama_Waiver_Signed__c() +
+                ", departureDate: " + visitInfo.getSamyama_Departure_Date__c() +
                 ", departureDateMealOption: " + visitInfo.getSamyama_Departure_Date_Meal_Option__c() +
                 ", hasCollectedNameTag: " + visitInfo.getSamyama_Name_Tag_Collected__c() +
                 ", isBaggageScreened: " + visitInfo.getSamyama_Baggage_Screened__c() +

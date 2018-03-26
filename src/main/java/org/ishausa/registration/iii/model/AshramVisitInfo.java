@@ -2,6 +2,9 @@ package org.ishausa.registration.iii.model;
 
 import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
 
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+
 /**
  * @author prasanna.venkatasubramanian
  */
@@ -15,6 +18,8 @@ public class AshramVisitInfo {
     private Boolean hasCheckedIn;
     private Boolean hasSignedWaiver;
     private Boolean hasCollectedNameTag;
+
+    private String departureDate;
     private String departureDateMealOption;
     private String batchNumber;
 
@@ -40,6 +45,11 @@ public class AshramVisitInfo {
         this.hasCheckedIn = sfObject.getChecked_In__c();
         this.hasSignedWaiver = sfObject.getSamyama_Waiver_Signed__c();
         this.hasCollectedNameTag = sfObject.getSamyama_Name_Tag_Collected__c();
+        this.departureDate = sfObject.getSamyama_Departure_Date__c() != null ? sfObject.getSamyama_Departure_Date__c()
+                .getTime()
+                .toInstant()
+                .atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE) : "2018-04-07";
         this.departureDateMealOption = sfObject.getSamyama_Departure_Date_Meal_Option__c();
         this.batchNumber = sfObject.getSamyama_Batch_Number__c();
 
