@@ -187,8 +187,10 @@ var ashramVisits = (function() {
     var formData = {};
 
     $(selector).each(function(index, n) {
-      if (n.type == "checkbox") {
+      if (n.type === "checkbox") {
         formData[n.name] = $(n).prop('checked');
+      } else if (n.type === "radio") {
+        formData[n.name] = $(`#${formId} input[name=${n.name}]:checked`).val();
       } else {
        formData[n.name] = $(n).val();
       }
