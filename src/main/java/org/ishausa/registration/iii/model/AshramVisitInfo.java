@@ -4,11 +4,14 @@ import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Logger;
 
 /**
  * @author prasanna.venkatasubramanian
  */
 public class AshramVisitInfo {
+    private static final Logger log = Logger.getLogger(AshramVisitInfo.class.getName());
+
     private String id;
     private String participantId;
     private String participantName;
@@ -39,9 +42,11 @@ public class AshramVisitInfo {
         this.id = sfObject.getId();
         this.participantId = sfObject.getVisitorName__c();
         if (sfObject.getVisitorName__r() == null) {
-            throw new NullPointerException("visitorName isn't set for ashram visit with id: " + sfObject.getId());
+            log.warning("visitorName isn't set for ashram visit with id: " + sfObject.getId());
+            this.participantName = "No Contact associated with Ashram Visit: " + sfObject.getId();
+        } else {
+            this.participantName = sfObject.getVisitorName__r().getName();
         }
-        this.participantName = sfObject.getVisitorName__r().getName();
 
         this.needsToPayForStay = sfObject.getSamyama_PaymentFlag__c();
 
