@@ -1,6 +1,7 @@
 var ashramVisits = (function() {
   var cachedParticipants;
   var cachedAshramVisitsPerParticipant = {};
+  var groupedAshramVisitsPerParticipant = {};
   var posting = false;
 
   const ashramVisitInfoDefaults = {
@@ -52,7 +53,17 @@ var ashramVisits = (function() {
       console.log("fetched ashram visits successfully");
     });
 
-    $.when(fetchParticipantsTask, fetchVisitsInfoTask).done(function() {
+    var fetchAllVisitsInfoTask = $.get("/api/visits/all", function(data) {
+      $.each(data, function(i, value) {
+        if (!groupedAshramVisitsPerParticipant[value.participantId]) {
+          groupedAshramVisitsPerParticipant[value.participantId] = [];
+        }
+        groupedAshramVisitsPerParticipant[value.participantId].push(value);
+      });
+      console.log("fetched all ashram visits successfully");
+    });
+
+    $.when(fetchParticipantsTask, fetchVisitsInfoTask, fetchAllVisitsInfoTask).done(function() {
       var listGroupHtml = '<div class="list-group">';
 
       $.each(cachedParticipants, function(i, value) {
@@ -111,6 +122,7 @@ var ashramVisits = (function() {
         alerts.showWarningMsg("Payment for stay not done for the entire duration of the stay. Please direct them to a separate counter to resolve this.");
       } else {
         fillMissingValues(ashramVisitInfo, ashramVisitInfoDefaults);
+        showAllAshramVisits(contactId);
         fillFormFields('edit_visit_info', ashramVisitInfo);
         render('#details');
       }
@@ -118,6 +130,17 @@ var ashramVisits = (function() {
       console.warn("no ashram visit info found for contact id: " + contactId);
       alerts.showWarningMsg("Unable to locate ashram visit info for contact. Please refresh the page and try again and if problem persists, direct them to a separate counter to resolve this.");
     }
+  }
+
+  function showAllAshramVisits(contactId) {
+    var tableHtml = "<table class='table table-striped'>";
+    tableHtml += "<tr><th>Visit Date</th><th>Checkout Date</th></tr>";
+    for (var i in groupedAshramVisitsPerParticipant[contactId]) {
+      var visit = groupedAshramVisitsPerParticipant[contactId][i];
+      tableHtml += `<tr><td>${visit.visitDateTime}</td><td>${visit.checkoutDateTime}</td></tr>`;
+    }
+    tableHtml += "<table>";
+    $("#allAshramVisits").html(tableHtml);
   }
 
   /**

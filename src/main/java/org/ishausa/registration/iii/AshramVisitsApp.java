@@ -84,6 +84,8 @@ import static spark.Spark.staticFiles;
 public class AshramVisitsApp {
     private static final Logger log = Logger.getLogger(AshramVisitsApp.class.getName());
     private static final Gson GSON = new GsonBuilder().create();
+    private static final String VISITS_START_DATE_BEGIN = "2018-03-20T00:00:00Z";
+    private static final String VISITS_START_DATE_END = "2018-04-09T00:00:00Z";
 
     private final EnterpriseConnection connection;
 
@@ -101,6 +103,7 @@ public class AshramVisitsApp {
         get("/", app::handleGet);
         get("/api/participants", app::getParticipantsForProgram);
         get("/api/visits", app::getAshramVisitsForProgram);
+        get("/api/visits/all", app::getAllAshramVisits);
 
         post("/api/participant/visit", app::updateVisitInfo);
 
@@ -167,6 +170,17 @@ public class AshramVisitsApp {
         return json;
     }
 
+    private String getAllAshramVisits(final Request request, final Response response) {
+        response.header("Content-Type", "application/json");
+
+        final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForDateRange(connection, VISITS_START_DATE_BEGIN, VISITS_START_DATE_END);
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        final String json = GSON.toJson(ashramVisits.stream().map(AshramVisitInfo::new).collect(Collectors.toList()));
+        final long translationTimeMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+        log.info("Json transformation time (in ms): " + translationTimeMillis);
+        return json;
+    }
+
     private List<Program_Contact_Relation__c> getParticipantsForProgram(final EnterpriseConnection connection,
                                                                         final String programId) {
         final Stopwatch stopwatch = Stopwatch.createStarted();
@@ -195,6 +209,7 @@ public class AshramVisitsApp {
         try {
             final String query =
                     "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
+                            "Visit_Date__c, Check_Out_Date__c, " +
                             "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date__c, " +
                             "Samyama_Participant_Region__c, " +
                             "Samyama_Departure_Date_Meal_Option__c, Samyama_Name_Tag_Tray_Location__c, " +
@@ -211,6 +226,36 @@ public class AshramVisitsApp {
             }
         } catch (final ConnectionException e) {
             log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for programId: " + programId, e);
+        }
+        return ashramVisits;
+    }
+
+    private List<Ashram_Visit_information__c> getAshramVisitsForDateRange(final EnterpriseConnection connection,
+                                                                          final String visitsStartDateBegin,
+                                                                          final String visitsStartDateEnd) {
+        final Stopwatch stopwatch = Stopwatch.createStarted();
+        final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
+        try {
+            final String query =
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
+                            "Visit_Date__c, Check_Out_Date__c, " +
+                            "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date__c, " +
+                            "Samyama_Departure_Date_Meal_Option__c, Samyama_Name_Tag_Tray_Location__c, " +
+                            "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
+                            "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
+                            "Samyama_Waiver_Signed__c " +
+                            "FROM Ashram_Visit_information__c " +
+                            "WHERE Check_Out_Date__c >= " + visitsStartDateBegin +
+                            " ORDER BY Visit_Date__c";
+            final QueryResult queryResult = connection.query(query);
+            log.info("getAshramVisits query execution time (in ms): " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
+            for (final SObject record : queryResult.getRecords()) {
+                ashramVisits.add((Ashram_Visit_information__c) record);
+            }
+        } catch (final ConnectionException e) {
+            log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for visit date range: " +
+                    visitsStartDateBegin + " to " + visitsStartDateEnd, e);
         }
         return ashramVisits;
     }
