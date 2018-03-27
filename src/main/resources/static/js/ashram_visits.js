@@ -105,6 +105,7 @@ var ashramVisits = (function() {
     if (posting) {
       return;
     }
+    $('#pleaseWaitDialog').modal();
     posting = true;
     var visitInfo = getFormData('edit_visit_info');
     console.log("Posting with params: " + JSON.stringify(visitInfo));
@@ -130,7 +131,12 @@ var ashramVisits = (function() {
     jqxhr.fail(function() {
       parseAjaxFailureMessageAndAlert(jqxhr);
     });
+
     posting = false;
+    $.when(jqxhr).done(function() {
+      render("#search");
+      $('#pleaseWaitDialog').modal('hide');
+    });
   }
 
   function parseAjaxFailureMessageAndAlert(jqxhr) {
@@ -151,7 +157,19 @@ var ashramVisits = (function() {
     }
   }
 
+  function clearValues(formId) {
+    var selector = `#${formId} input, #${formId} select, #${formId} textarea`;
+    $(selector).each(function(index, n) {
+      if (n.type == "checkbox") {
+      } else if (n.type == "radio") {
+      } else {
+        $(n).val('');
+      }
+    });
+  }
+
   function fillFormFields(formId, data) {
+    clearValues(formId);
     var formObj = $(`#${formId}`);
     $.each(data, function(key, value) {
       var ctrl = $('[name=' + key + ']', formObj);
@@ -214,6 +232,7 @@ var ashramVisits = (function() {
 
       '#search': function() {
         $(".section_search").removeClass("hidden");
+        $('#currentSearch').select();
       },
 
       '#details': function() {

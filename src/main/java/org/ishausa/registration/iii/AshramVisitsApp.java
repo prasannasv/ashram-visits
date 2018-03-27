@@ -25,6 +25,8 @@ import spark.Response;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -194,7 +196,7 @@ public class AshramVisitsApp {
             final String query =
                     "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
                             "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date__c, " +
-                            "Samyama_Departure_Date_Meal_Option__c, " +
+                            "Samyama_Departure_Date_Meal_Option__c, Samyama_Name_Tag_Tray_Location__c, " +
                             "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
                             "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
                             "Samyama_Waiver_Signed__c " +
@@ -258,7 +260,11 @@ public class AshramVisitsApp {
                 " with check in status: " + visitInfo.getChecked_In__c() +
                 ", batchNumber: " + visitInfo.getSamyama_Batch_Number__c() +
                 ", hasSignedWaiver: " + visitInfo.getSamyama_Waiver_Signed__c() +
-                ", departureDate: " + visitInfo.getSamyama_Departure_Date__c() +
+                ", departureDate: " + visitInfo.getSamyama_Departure_Date__c()
+                    .getTime()
+                    .toInstant()
+                    .atOffset(ZoneOffset.UTC)
+                    .format(DateTimeFormatter.ISO_LOCAL_DATE) +
                 ", departureDateMealOption: " + visitInfo.getSamyama_Departure_Date_Meal_Option__c() +
                 ", hasCollectedNameTag: " + visitInfo.getSamyama_Name_Tag_Collected__c() +
                 ", isBaggageScreened: " + visitInfo.getSamyama_Baggage_Screened__c() +

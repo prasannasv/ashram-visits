@@ -17,6 +17,7 @@ public class AshramVisitInfo {
     private String participantName;
 
     private Boolean needsToPayForStay;
+    private String nameTagTrayLocation;
 
     private Boolean hasCheckedIn;
     private Boolean hasSignedWaiver;
@@ -49,10 +50,10 @@ public class AshramVisitInfo {
         }
 
         this.needsToPayForStay = sfObject.getSamyama_PaymentFlag__c();
+        this.nameTagTrayLocation = sfObject.getSamyama_Name_Tag_Tray_Location__c();
 
         this.hasCheckedIn = sfObject.getChecked_In__c();
         this.hasSignedWaiver = sfObject.getSamyama_Waiver_Signed__c();
-        this.hasCollectedNameTag = sfObject.getSamyama_Name_Tag_Collected__c();
         this.departureDate = sfObject.getSamyama_Departure_Date__c() != null ? sfObject.getSamyama_Departure_Date__c()
                 .getTime()
                 .toInstant()
@@ -67,6 +68,8 @@ public class AshramVisitInfo {
 
         this.hallLocation = sfObject.getSamyama_Hall_Location__c();
 
+        // this corresponds to samyama number tag
+        this.hasCollectedNameTag = sfObject.getSamyama_Name_Tag_Collected__c();
         this.number = sfObject.getSamyama_Number__c();
         this.numberTagTrayLocation = sfObject.getSamyama_Number_Tag_Tray_Location__c();
     }
