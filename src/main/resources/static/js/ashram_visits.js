@@ -130,6 +130,7 @@ var ashramVisits = (function() {
     jqxhr.fail(function() {
       parseAjaxFailureMessageAndAlert(jqxhr);
     });
+
     posting = false;
   }
 
@@ -151,7 +152,19 @@ var ashramVisits = (function() {
     }
   }
 
+  function clearValues(formId) {
+    var selector = `#${formId} input, #${formId} select, #${formId} textarea`;
+    $(selector).each(function(index, n) {
+      if (n.type == "checkbox") {
+      } else if (n.type == "radio") {
+      } else {
+        $(n).val('');
+      }
+    });
+  }
+
   function fillFormFields(formId, data) {
+    clearValues(formId);
     var formObj = $(`#${formId}`);
     $.each(data, function(key, value) {
       var ctrl = $('[name=' + key + ']', formObj);
