@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 Salesforce.com Enterprise Web Services API Version 42.0
-Generated on 2018-03-26 04:52:20 +0000.
+Generated on 2018-03-27 06:49:06 +0000.
 
 Package Versions:
 ExportToExcel (Version: 1.6, Namespace: rkexporttoexcel)
@@ -1305,6 +1305,7 @@ All Rights Reserved
                         <element name="Samyama_Done_Medical_Screening__c" nillable="true" minOccurs="0" type="xsd:boolean"/>
                         <element name="Samyama_Hall_Location__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Samyama_Name_Tag_Collected__c" nillable="true" minOccurs="0" type="xsd:boolean"/>
+                        <element name="Samyama_Name_Tag_Tray_Location__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Samyama_Number_Tag_Tray_Location__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Samyama_Number__c" nillable="true" minOccurs="0" type="xsd:string"/>
                         <element name="Samyama_Valuables_Collected__c" nillable="true" minOccurs="0" type="xsd:boolean"/>
