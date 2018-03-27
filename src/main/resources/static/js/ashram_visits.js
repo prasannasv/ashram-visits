@@ -105,6 +105,7 @@ var ashramVisits = (function() {
     if (posting) {
       return;
     }
+    $('#pleaseWaitDialog').modal();
     posting = true;
     var visitInfo = getFormData('edit_visit_info');
     console.log("Posting with params: " + JSON.stringify(visitInfo));
@@ -132,6 +133,10 @@ var ashramVisits = (function() {
     });
 
     posting = false;
+    $.when(jqxhr).done(function() {
+      render("#search");
+      $('#pleaseWaitDialog').modal('hide');
+    });
   }
 
   function parseAjaxFailureMessageAndAlert(jqxhr) {
@@ -227,6 +232,7 @@ var ashramVisits = (function() {
 
       '#search': function() {
         $(".section_search").removeClass("hidden");
+        $('#currentSearch').select();
       },
 
       '#details': function() {
