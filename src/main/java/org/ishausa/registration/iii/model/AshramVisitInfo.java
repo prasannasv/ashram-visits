@@ -47,7 +47,8 @@ public class AshramVisitInfo {
         this.id = sfObject.getId();
         this.participantId = sfObject.getVisitorName__c();
         if (sfObject.getVisitorName__r() == null) {
-            log.warning("visitorName isn't set for ashram visit with id: " + sfObject.getId());
+            // would happen for all blacked out ashram visit records
+            //log.warning("visitorName isn't set for ashram visit with id: " + sfObject.getId());
             this.participantName = "No Contact associated with Ashram Visit: " + sfObject.getId();
         } else {
             this.participantName = sfObject.getVisitorName__r().getName();

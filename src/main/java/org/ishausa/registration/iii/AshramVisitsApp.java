@@ -237,21 +237,19 @@ public class AshramVisitsApp {
         final List<Ashram_Visit_information__c> ashramVisits = new ArrayList<>();
         try {
             final String query =
-                    "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
-                            "Visit_Date__c, Check_Out_Date__c, " +
-                            "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date__c, " +
-                            "Samyama_Departure_Date_Meal_Option__c, Samyama_Name_Tag_Tray_Location__c, " +
-                            "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
-                            "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
-                            "Samyama_Waiver_Signed__c " +
+                    "SELECT Id, VisitorName__c, VisitorName__r.Name, Visit_Date__c, Check_Out_Date__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Check_Out_Date__c >= " + visitsStartDateBegin +
                             " ORDER BY Visit_Date__c";
+            log.info("Running query: " + query);
             final QueryResult queryResult = connection.query(query);
             log.info("getAshramVisits query execution time (in ms): " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
             for (final SObject record : queryResult.getRecords()) {
                 ashramVisits.add((Ashram_Visit_information__c) record);
+                if ("003A000000lGVdwIAG".equals(((Ashram_Visit_information__c) record).getVisitorName__c())) {
+                    log.info("Loaded Amit's record as: " + GSON.toJson(record));
+                }
             }
         } catch (final ConnectionException e) {
             log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for visit date range: " +
