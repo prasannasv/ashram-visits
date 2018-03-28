@@ -17,6 +17,9 @@ public class AshramVisitInfo {
     private String participantName;
     private String participantRegion;
 
+    private String visitDateTime;
+    private String checkoutDateTime;
+
     private Boolean needsToPayForStay;
     private String nameTagTrayLocation;
 
@@ -44,12 +47,24 @@ public class AshramVisitInfo {
         this.id = sfObject.getId();
         this.participantId = sfObject.getVisitorName__c();
         if (sfObject.getVisitorName__r() == null) {
-            log.warning("visitorName isn't set for ashram visit with id: " + sfObject.getId());
+            // would happen for all blacked out ashram visit records
+            //log.warning("visitorName isn't set for ashram visit with id: " + sfObject.getId());
             this.participantName = "No Contact associated with Ashram Visit: " + sfObject.getId();
         } else {
             this.participantName = sfObject.getVisitorName__r().getName();
         }
         this.participantRegion = sfObject.getSamyama_Participant_Region__c();
+
+        this.visitDateTime = sfObject.getVisit_Date__c() != null ? sfObject.getVisit_Date__c()
+                .getTime()
+                .toInstant()
+                .atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_DATE_TIME) : "";
+        this.checkoutDateTime = sfObject.getCheck_Out_Date__c() != null ? sfObject.getCheck_Out_Date__c()
+                .getTime()
+                .toInstant()
+                .atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_DATE_TIME) : "";
 
         this.needsToPayForStay = sfObject.getSamyama_PaymentFlag__c();
         this.nameTagTrayLocation = sfObject.getSamyama_Name_Tag_Tray_Location__c();
