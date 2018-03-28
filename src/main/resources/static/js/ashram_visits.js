@@ -7,6 +7,7 @@ var ashramVisits = (function() {
     "id": "",
     "participantId": "",
     "participantName": "",
+    "participantRegion": "",
     "needsToPayForStay": false,
     "nameTagTrayLocation": "",
     "hasCheckedIn": false,
