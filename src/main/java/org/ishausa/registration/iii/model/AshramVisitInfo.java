@@ -15,6 +15,7 @@ public class AshramVisitInfo {
     private String id;
     private String participantId;
     private String participantName;
+    private String participantRegion;
 
     private Boolean needsToPayForStay;
     private String nameTagTrayLocation;
@@ -48,6 +49,7 @@ public class AshramVisitInfo {
         } else {
             this.participantName = sfObject.getVisitorName__r().getName();
         }
+        this.participantRegion = sfObject.getSamyama_Participant_Region__c();
 
         this.needsToPayForStay = sfObject.getSamyama_PaymentFlag__c();
         this.nameTagTrayLocation = sfObject.getSamyama_Name_Tag_Tray_Location__c();

@@ -196,6 +196,7 @@ public class AshramVisitsApp {
             final String query =
                     "SELECT Id, VisitorName__c, VisitorName__r.Name, samyama_PaymentFlag__c, Checked_In__c, " +
                             "Samyama_Baggage_Screened__c, Samyama_Batch_Number__c, Samyama_Departure_Date__c, " +
+                            "Samyama_Participant_Region__c, " +
                             "Samyama_Departure_Date_Meal_Option__c, Samyama_Name_Tag_Tray_Location__c, " +
                             "Samyama_Done_Medical_Screening__c, Samyama_Hall_Location__c, Samyama_Name_Tag_Collected__c, " +
                             "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
