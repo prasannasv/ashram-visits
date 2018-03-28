@@ -143,10 +143,23 @@ var ashramVisits = (function() {
     $("#allAshramVisits").html(tableHtml);
   }
 
+  function validateCheckIn() {
+    var visitInfo = getFormData('edit_visit_info');
+    if (!visitInfo.batchNumber) {
+      alerts.showWarningMsg("Please enter the token number.", 2500, "batchNumberError");
+      $("#batchNumberInputId").focus();
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Saves the current values of section_details view in the Ashram Visits info object.
    */
   function save() {
+    if (!validateCheckIn()) {
+      return;
+    }
     if (posting) {
       return;
     }
