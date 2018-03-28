@@ -84,7 +84,7 @@ import static spark.Spark.staticFiles;
 public class AshramVisitsApp {
     private static final Logger log = Logger.getLogger(AshramVisitsApp.class.getName());
     private static final Gson GSON = new GsonBuilder().create();
-    private static final String VISITS_START_DATE_BEGIN = "2018-03-20T00:00:00Z";
+    private static final String VISITS_START_DATE_BEGIN = "2018-03-27T00:00:00Z";
     private static final String VISITS_START_DATE_END = "2018-04-09T00:00:00Z";
 
     private final EnterpriseConnection connection;
@@ -175,7 +175,9 @@ public class AshramVisitsApp {
 
         final List<Ashram_Visit_information__c> ashramVisits = getAshramVisitsForDateRange(connection, VISITS_START_DATE_BEGIN, VISITS_START_DATE_END);
         final Stopwatch stopwatch = Stopwatch.createStarted();
-        final String json = GSON.toJson(ashramVisits.stream().map(AshramVisitInfo::new).collect(Collectors.toList()));
+        final List<AshramVisitInfo> ashramVisitInfos = ashramVisits.stream().map(AshramVisitInfo::new).collect(Collectors.toList());
+        log.info("Fetched ashram visits: " + ashramVisitInfos.size());
+        final String json = GSON.toJson(ashramVisitInfos);
         final long translationTimeMillis = stopwatch.elapsed(TimeUnit.MILLISECONDS);
         log.info("Json transformation time (in ms): " + translationTimeMillis);
         return json;
@@ -240,6 +242,8 @@ public class AshramVisitsApp {
                     "SELECT Id, VisitorName__c, VisitorName__r.Name, Visit_Date__c, Check_Out_Date__c " +
                             "FROM Ashram_Visit_information__c " +
                             "WHERE Check_Out_Date__c >= " + visitsStartDateBegin +
+                            " AND VisitorName__c != '0030G00002dEG7NQAW'" + // Program Luggage Blocker
+                            " AND VisitorName__c != '0030G00002an2OrQAI'" + // Program Luggage Blocker
                             " ORDER BY Visit_Date__c";
             log.info("Running query: " + query);
             final QueryResult queryResult = connection.query(query);
@@ -247,9 +251,6 @@ public class AshramVisitsApp {
 
             for (final SObject record : queryResult.getRecords()) {
                 ashramVisits.add((Ashram_Visit_information__c) record);
-                if ("003A000000lGVdwIAG".equals(((Ashram_Visit_information__c) record).getVisitorName__c())) {
-                    log.info("Loaded Amit's record as: " + GSON.toJson(record));
-                }
             }
         } catch (final ConnectionException e) {
             log.log(Level.SEVERE, "Exception querying Ashram_Visit_information__c for visit date range: " +
