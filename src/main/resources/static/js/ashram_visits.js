@@ -67,8 +67,15 @@ var ashramVisits = (function() {
       var listGroupHtml = '<div class="list-group">';
 
       $.each(cachedParticipants, function(i, value) {
+        var numberOrZero = cachedAshramVisitsPerParticipant[value.participantId].number ?
+          cachedAshramVisitsPerParticipant[value.participantId].number : 0;
+        var batchNumberOrEmpty = cachedAshramVisitsPerParticipant[value.participantId].batchNumber ?
+          ' (' + cachedAshramVisitsPerParticipant[value.participantId].batchNumber + ')' : "";
         listGroupHtml += '<a id="' + value.participantId + '" href="#" class="list-group-item list-group-item-action">' +
-          toTitleCase(value.participantFirstName + ' ' + value.participantLastName) + ' (' + toTitleCase(value.sathsangCenterName) + ')' +
+          toTitleCase(value.participantFirstName + ' ' + value.participantLastName) +
+          ' (' + toTitleCase(value.sathsangCenterName) + ')' +
+          ' (' + ("00" + numberOrZero).slice(-3) + ')' +
+          batchNumberOrEmpty +
           '</a>';
       });
       listGroupHtml += '</div>';
