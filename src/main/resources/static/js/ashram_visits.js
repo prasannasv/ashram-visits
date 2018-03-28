@@ -3,6 +3,26 @@ var ashramVisits = (function() {
   var cachedAshramVisitsPerParticipant = {};
   var posting = false;
 
+  const ashramVisitInfoDefaults = {
+    "id": "",
+    "participantId": "",
+    "participantName": "",
+    "needsToPayForStay": false,
+    "nameTagTrayLocation": "",
+    "hasCheckedIn": false,
+    "hasSignedWaiver": false,
+    "departureDate": "2018-04-07",
+    "departureDateMealOption": "None",
+    "batchNumber": "",
+    "isBaggageScreened": false,
+    "doneMedicalScreening": false,
+    "isValuablesCollected": false,
+    "hallLocation": "",
+    "numberTagTrayLocation": "",
+    "number": "",
+    "hasCollectedNameTag": false,
+  };
+
   $(document).ready(function() {
     render(window.location.hash);
     $(window).on('hashchange', function() {
@@ -89,6 +109,7 @@ var ashramVisits = (function() {
       if (ashramVisitInfo.needsToPayForStay) {
         alerts.showWarningMsg("Payment for stay not done for the entire duration of the stay. Please direct them to a separate counter to resolve this.");
       } else {
+        fillMissingValues(ashramVisitInfo, ashramVisitInfoDefaults);
         fillFormFields('edit_visit_info', ashramVisitInfo);
         render('#details');
       }
@@ -157,19 +178,20 @@ var ashramVisits = (function() {
     }
   }
 
-  function clearValues(formId) {
-    var selector = `#${formId} input, #${formId} select, #${formId} textarea`;
-    $(selector).each(function(index, n) {
-      if (n.type == "checkbox") {
-      } else if (n.type == "radio") {
-      } else {
-        $(n).val('');
+  /*
+   * Explicitly set default values for all form fields
+   */
+  function fillMissingValues(data, defaultValues) {
+    console.log("data: " + JSON.stringify(data) + ", defaultValues: " + JSON.stringify(defaultValues));
+    $.each(defaultValues, function(key, value) {
+      if (!data.hasOwnProperty(key)) {
+        console.log("Defaulting value for key: " + key + " with value: " + value);
+        data[key] = value;
       }
     });
   }
 
   function fillFormFields(formId, data) {
-    clearValues(formId);
     var formObj = $(`#${formId}`);
     $.each(data, function(key, value) {
       var ctrl = $('[name=' + key + ']', formObj);
@@ -188,16 +210,38 @@ var ashramVisits = (function() {
           ctrl.prop("checked", value);
           break;
         case "radio":
-          ctrl.each(function() {
-            if ($(this).attr('value') == value) {
-              $(this).attr("checked", value);
-            }
-          });
           break;
         default:
           ctrl.val(value);
       }
     });
+
+    // Handle the radio buttons separately
+    const departureDateOptions = {
+      "7th April" : "2018-04-07",
+      "8th April" : "2018-04-08",
+      "9th April" : "2018-04-09",
+      "10th April" : "2018-04-10",
+      "11th April" : "2018-04-11",
+    };
+    generateAndSetRadioButtonsHtml(departureDateOptions, data.departureDate, "departureDate", "departureDateOptionsDiv");
+
+    const departureDateMealOptions = {
+      "None" : "None",
+      "Brunch" : "Brunch",
+      "Dinner" : "Dinner",
+    };
+    generateAndSetRadioButtonsHtml(departureDateMealOptions, data.departureDateMealOption, "departureDateMealOption", "departureDateMealOptionsDiv");
+  }
+
+  function generateAndSetRadioButtonsHtml(options, checkedValue, fieldName, divId) {
+    var optionsHtml = "";
+    $.each(options, function(key, value) {
+      var checked = value == checkedValue ? " checked" : "";
+      optionsHtml += `<input type="radio" name="${fieldName}" value="${value}"${checked}> ${key} &nbsp;`;
+    });
+    $(`#${divId}`).html(optionsHtml);
+    console.log("Set with html: " + optionsHtml);
   }
 
   function getFormData(formId) {
@@ -232,7 +276,7 @@ var ashramVisits = (function() {
 
       '#search': function() {
         $(".section_search").removeClass("hidden");
-        $('#currentSearch').select();
+        clearSearch();
       },
 
       '#details': function() {
@@ -254,9 +298,16 @@ var ashramVisits = (function() {
     }
   }
 
+  function clearSearch() {
+    $('#currentSearch').val('');
+    filterNameButtons('');
+    $('#currentSearch').focus();
+  }
+
   return {
     filterNameButtons: filterNameButtons,
     render: render,
-    save: save
+    save: save,
+    clearSearch: clearSearch
   };
 })();

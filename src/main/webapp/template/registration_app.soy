@@ -63,7 +63,7 @@
 
               <div>
                 Search by name or number: <input type="text" id="currentSearch" autofocus></input>&nbsp;
-                <button type="button" class="btn btn-warning" onclick="javascript:$('#currentSearch').val('');ashramVisits.filterNameButtons('');$('#currentSearch').focus();" type="button">Clear</button>
+                <button type="button" class="btn btn-warning" onclick="javascript:ashramVisits.clearSearch(); return false;" type="button">Clear</button>
               </div>
               <br>
               <hr>
@@ -114,21 +114,13 @@
 
             <div class="form-group row">
               <label class="col-sm-4 col-form-label">Departure Date</label>
-              <div class="col-sm-6">
-                <input type="radio" name="departureDate" value="2018-04-07"> 7th April&nbsp;
-                <input type="radio" name="departureDate" value="2018-04-08"> 8th April&nbsp;
-                <input type="radio" name="departureDate" value="2018-04-09"> 9th April&nbsp;
-                <input type="radio" name="departureDate" value="2018-04-10"> 10th April&nbsp;
-                <input type="radio" name="departureDate" value="2018-04-11"> 11th April&nbsp;
+              <div class="col-sm-6" id="departureDateOptionsDiv">
               </div>
             </div>
 
             <div class="form-group row">
               <label class="col-sm-4 col-form-label">Departure Date Meal Option</label>
-              <div class="col-sm-3">
-                <input type="radio" name="departureDateMealOption" value="None"> None&nbsp;
-                <input type="radio" name="departureDateMealOption" value="Brunch"> Brunch&nbsp;
-                <input type="radio" name="departureDateMealOption" value="Dinner"> Dinner&nbsp;
+              <div class="col-sm-3" id="departureDateMealOptionsDiv">
               </div>
             </div>
 
