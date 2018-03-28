@@ -276,7 +276,7 @@ var ashramVisits = (function() {
 
       '#search': function() {
         $(".section_search").removeClass("hidden");
-        $('#currentSearch').select();
+        clearSearch();
       },
 
       '#details': function() {
@@ -298,9 +298,16 @@ var ashramVisits = (function() {
     }
   }
 
+  function clearSearch() {
+    $('#currentSearch').val('');
+    filterNameButtons('');
+    $('#currentSearch').focus();
+  }
+
   return {
     filterNameButtons: filterNameButtons,
     render: render,
-    save: save
+    save: save,
+    clearSearch: clearSearch
   };
 })();
