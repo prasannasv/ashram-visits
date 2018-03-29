@@ -38,32 +38,7 @@ var ashramVisits = (function() {
       filterNameButtons($(this).val());
     });
 
-    let params = (new URL(document.location)).searchParams;
-    let programId = params.get("id");
-
-    var fetchParticipantsTask = $.get("/api/participants?pgm_id=" + programId, function(data) {
-      cachedParticipants = data;
-      console.log("fetched participants successfully");
-    });
-
-    var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
-      $.each(data, function(i, value) {
-        cachedAshramVisitsPerParticipant[value.participantId] = value;
-      });
-      console.log("fetched ashram visits successfully");
-    });
-
-    var fetchAllVisitsInfoTask = $.get("/api/visits/all", function(data) {
-      $.each(data, function(i, value) {
-        if (!groupedAshramVisitsPerParticipant[value.participantId]) {
-          groupedAshramVisitsPerParticipant[value.participantId] = [];
-        }
-        groupedAshramVisitsPerParticipant[value.participantId].push(value);
-      });
-      console.log("fetched all ashram visits successfully");
-    });
-
-    $.when(fetchParticipantsTask, fetchVisitsInfoTask, fetchAllVisitsInfoTask).done(function() {
+    loadParticipantAndVisitInfo(function() {
       var listGroupHtml = '<div class="list-group">';
 
       $.each(cachedParticipants, function(i, value) {
@@ -90,9 +65,38 @@ var ashramVisits = (function() {
 
       $("#progress").addClass("hidden");
       $(".btn-container").removeClass("hidden");
-      console.log('done calling both');
+      console.log('done calling tasks');
     });
   });
+
+  function loadParticipantAndVisitInfo(callback) {
+     let params = (new URL(document.location)).searchParams;
+     let programId = params.get("id");
+
+     var fetchParticipantsTask = $.get("/api/participants?pgm_id=" + programId, function(data) {
+       cachedParticipants = data;
+       console.log("fetched participants successfully");
+     });
+
+     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
+       $.each(data, function(i, value) {
+         cachedAshramVisitsPerParticipant[value.participantId] = value;
+       });
+       console.log("fetched ashram visits successfully");
+     });
+
+     var fetchAllVisitsInfoTask = $.get("/api/visits/all", function(data) {
+       $.each(data, function(i, value) {
+         if (!groupedAshramVisitsPerParticipant[value.participantId]) {
+           groupedAshramVisitsPerParticipant[value.participantId] = [];
+         }
+         groupedAshramVisitsPerParticipant[value.participantId].push(value);
+       });
+       console.log("fetched all ashram visits successfully");
+     });
+
+     $.when(fetchParticipantsTask, fetchVisitsInfoTask, fetchAllVisitsInfoTask).done(callback);
+ }
 
   function setGroupItemClassPerCheckInStatus() {
     $(".active").removeClass("active");
@@ -317,6 +321,88 @@ var ashramVisits = (function() {
     return formData;
   }
 
+  function dateFromDateTime(dateTimeStr) {
+    if (dateTimeStr) {
+      return dateTimeStr.split(':')[0] + ":00:00Z";
+    }
+    else {
+      return "N/A";
+    }
+  }
+  /*
+     Total Participants
+     Total Checked In
+     Checked in by Region
+     - USCA
+     - EUUC
+     - APAC
+     Arrivals by Date & Time
+     - USCA
+     - EUUC
+     - APAC
+   */
+  function renderCheckInReport() {
+    if (!cachedParticipants) {
+      loadParticipantAndVisitInfo(renderCheckInReport);
+    } else {
+      var reportHtml = '<table class="table table-striped table-bordered">';
+      var checkedInCount = 0;
+      var byRegion = {};
+      var byArrivalDate = {};
+      var totalAshramVisitsPerProgram = 0;
+      $.each(cachedAshramVisitsPerParticipant, function(key, value) {
+        totalAshramVisitsPerProgram += 1;
+        if (!byRegion[value.participantRegion]) {
+          byRegion[value.participantRegion] = {"total": 0, "checkedIn": 0};
+        }
+        var arrivalDate = dateFromDateTime(value.visitDateTime);
+        if (!byArrivalDate[arrivalDate]) {
+          byArrivalDate[arrivalDate] = {"total": 0, "checkedIn": 0};
+        }
+
+        if (value.hasCheckedIn) {
+          checkedInCount += 1;
+          byRegion[value.participantRegion]["checkedIn"] += 1;
+          byArrivalDate[arrivalDate]["checkedIn"] += 1;
+        }
+        byRegion[value.participantRegion]["total"] += 1;
+        byArrivalDate[arrivalDate]["total"] += 1;
+      });
+
+      var regionReportHtml = '<table class="table table-striped table-bordered">';
+      regionReportHtml += '<tr><th>Region</th><th>Total</th><th>Checked In</th></tr>';
+      $.each(byRegion, function(key, value) {
+        regionReportHtml += `<tr><td>${key}</td><td>${value.total}</td><td>${value.checkedIn}</td></tr>`;
+      });
+      regionReportHtml += '</table>';
+
+      var arrivalDateHours = [];
+      $.each(byArrivalDate, function(key, value) {
+        arrivalDateHours.push(key);
+      });
+      arrivalDateHours = arrivalDateHours.sort().reverse();
+
+      var arrivalDateReportHtml = '<table class="table table-striped table-bordered">';
+      arrivalDateReportHtml += '<tr><th>Expected Arrival Date</th><th>Total</th><th>Checked In</th></tr>';
+      $.each(arrivalDateHours, function(i, arrivalDateHour) {
+        var key = arrivalDateHour;
+        var value = byArrivalDate[arrivalDateHour];
+        arrivalDateReportHtml += `<tr><td>${key}</td><td>${value.total}</td><td>${value.checkedIn}</td></tr>`;
+      });
+      arrivalDateReportHtml += '</table>';
+
+      reportHtml += `<tr><th>Total Participants</th><td>${cachedParticipants.length}</td></tr>`;
+      reportHtml += `<tr><th>Total Ashram Visits for Program</th><td>${totalAshramVisitsPerProgram}</td></tr>`;
+      reportHtml += `<tr><th>Checked-in Participants</th><td>${checkedInCount}</td></tr>`;
+      reportHtml += `<tr><th>By region breakdown</th><td>${regionReportHtml}</td></tr>`;
+      reportHtml += `<tr><th>By arrival date breakdown</th><td>${arrivalDateReportHtml}</td></tr>`;
+      reportHtml += '</table>';
+
+      $("#report_table_div").html(reportHtml);
+      $(".section_report").removeClass("hidden");
+    }
+  }
+
   function render(url, alert = null) {
 
     // Get the keyword from the url.
@@ -337,6 +423,10 @@ var ashramVisits = (function() {
 
       '#details': function() {
         $(".section_details").removeClass("hidden");
+      },
+
+      '#report': function() {
+        renderCheckInReport();
       }
     };
 
