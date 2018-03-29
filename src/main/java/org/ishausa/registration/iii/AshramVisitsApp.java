@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.sforce.soap.enterprise.EnterpriseConnection;
 import com.sforce.soap.enterprise.QueryResult;
+import com.sforce.soap.enterprise.SaveResult;
 import com.sforce.soap.enterprise.sobject.Ashram_Visit_information__c;
 import com.sforce.soap.enterprise.sobject.Program_Contact_Relation__c;
 import com.sforce.soap.enterprise.sobject.Program__c;
@@ -23,6 +24,7 @@ import org.ishausa.registration.iii.security.HttpsEnforcer;
 import spark.Request;
 import spark.Response;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -109,8 +111,9 @@ public class AshramVisitsApp {
 
         exception(Exception.class, ((exception, request, response) -> {
             log.info("Exception: " + exception + " stack: " + Throwables.getStackTraceAsString(exception));
+            response.header("Content-Type", "application/json");
             response.status(500);
-            response.body("Exception: " + exception + " stack: " + Throwables.getStackTraceAsString(exception));
+            response.body(GSON.toJson(new Status(StatusCode.FAILURE, exception.getMessage())));
         }));
 
         app.initFilters();
@@ -259,7 +262,8 @@ public class AshramVisitsApp {
         return ashramVisits;
     }
 
-    private String updateVisitInfo(final Request request, final Response response) throws ConnectionException {
+    private String updateVisitInfo(final Request request, final Response response)
+            throws IOException, ConnectionException {
         response.header("Content-Type", "application/json");
         final String content = request.body();
         final Map<String, List<String>> params = NameValuePairs.splitParams(content);
@@ -278,7 +282,7 @@ public class AshramVisitsApp {
         visitInfo.setId(ashramVisitId);
         final String batchNumber = NameValuePairs.nullSafeGetFirst(params, "batchNumber");
         if (!Strings.isNullOrEmpty(batchNumber)) {
-            visitInfo.setSamyama_Batch_Number__c(batchNumber);
+            visitInfo.setSamyama_Batch_Number__c(batchNumber.toUpperCase());
         } else {
             fieldsToNull.add("Samyama_Batch_Number__c");
         }
@@ -319,8 +323,16 @@ public class AshramVisitsApp {
                 ", fieldsToNull: " + Arrays.asList(visitInfo.getFieldsToNull())
         );
 
-        connection.update(new Ashram_Visit_information__c[] {visitInfo});
-        log.info("Saved successfully");
+        final SaveResult[] saveResults = connection.update(new Ashram_Visit_information__c[] {visitInfo});
+        if (!saveResults[0].isSuccess()) {
+            if (saveResults[0].getErrors().length == 1) {
+                throw new IOException("Check-in failed: " + saveResults[0].getErrors()[0].getMessage());
+            } else {
+                throw new IOException("Check-in failed: " + saveResults[0]);
+            }
+        } else {
+            log.info("Saved successfully");
+        }
 
         return GSON.toJson(new Status(StatusCode.OK, ""));
     }

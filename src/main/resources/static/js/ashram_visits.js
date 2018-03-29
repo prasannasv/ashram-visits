@@ -156,6 +156,14 @@ var ashramVisits = (function() {
       alerts.showWarningMsg("Please enter the token number.", 2500, "batchNumberError");
       $("#batchNumberInputId").focus();
       return false;
+    } else if (!/[A-Wa-w][0-9]+/.test(visitInfo.batchNumber)) {
+      alerts.showWarningMsg("Token number should be of the form A10 and can only be from A1 to W45.", 10000, "batchNumberError");
+      $("#batchNumberInputId").focus();
+      return false;
+    } else if (parseInt(visitInfo.batchNumber.substring(1)) > 45) {
+      alerts.showWarningMsg("Token number must be from 1 to 45.", 10000, "batchNumberError");
+      $("#batchNumberInputId").focus();
+      return false;
     }
     return true;
   }
@@ -177,6 +185,7 @@ var ashramVisits = (function() {
 
     var jqxhr = $.post('/api/participant/visit', visitInfo);
     jqxhr.done(function(data) {
+      posting = false;
       console.log("received response for POST: " + JSON.stringify(data));
 
       if (data.status === "OK") {
@@ -194,10 +203,12 @@ var ashramVisits = (function() {
     });
 
     jqxhr.fail(function() {
+      posting = false;
+      render("#search");
+      $('#pleaseWaitDialog').modal('hide');
       parseAjaxFailureMessageAndAlert(jqxhr);
     });
 
-    posting = false;
     $.when(jqxhr).done(function() {
       render("#search");
       $('#pleaseWaitDialog').modal('hide');
@@ -205,6 +216,7 @@ var ashramVisits = (function() {
   }
 
   function parseAjaxFailureMessageAndAlert(jqxhr) {
+    console.log("jqxhr: " + JSON.stringify(jqxhr));
     if (jqxhr && jqxhr.responseText && jqxhr.responseText.length > 0) {
       var contentType = jqxhr.getResponseHeader("content-type") || "";
       if (contentType.indexOf('json') > -1) {
