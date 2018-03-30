@@ -49,6 +49,9 @@ var ashramVisits = (function() {
     var fetchVisitsInfoTask = $.get("/api/visits?pgm_id=" + programId, function(data) {
       $.each(data, function(i, value) {
         cachedAshramVisitsPerParticipant[value.participantId] = value;
+        if (!value.number) {
+          console.log("Missing number for " + JSON.stringify(value));
+        }
       });
       console.log("fetched ashram visits successfully");
     });
@@ -67,6 +70,10 @@ var ashramVisits = (function() {
       var listGroupHtml = '<div class="list-group">';
 
       $.each(cachedParticipants, function(i, value) {
+        if (!cachedAshramVisitsPerParticipant[value.participantId]) {
+          console.log("No ashram visit for participant: " + value.participantId);
+          return;
+        }
         var numberOrZero = cachedAshramVisitsPerParticipant[value.participantId].number ?
           cachedAshramVisitsPerParticipant[value.participantId].number : 0;
         var batchNumberOrEmpty = cachedAshramVisitsPerParticipant[value.participantId].batchNumber ?
