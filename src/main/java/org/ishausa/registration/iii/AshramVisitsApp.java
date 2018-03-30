@@ -88,6 +88,8 @@ public class AshramVisitsApp {
     private static final Gson GSON = new GsonBuilder().create();
     private static final String VISITS_START_DATE_BEGIN = "2018-03-27T00:00:00Z";
     private static final String VISITS_START_DATE_END = "2018-04-09T00:00:00Z";
+    private static final String DAY_AFTER_PROGRAM_START = "2018-04-02T00:00:00Z";
+    private static final String DAY_BEFORE_PROGRAM_END = "2018-04-05T00:00:00Z";
 
     private final EnterpriseConnection connection;
 
@@ -207,6 +209,10 @@ public class AshramVisitsApp {
         return participants;
     }
 
+    /**
+     * Returns exactly one AshramVisit info that corresponds to the program even if there are multiple associated with the
+     * program.
+     */
     private List<Ashram_Visit_information__c> getAshramVisitsForProgram(final EnterpriseConnection connection,
                                                                         final String programId) {
         final Stopwatch stopwatch = Stopwatch.createStarted();
@@ -222,7 +228,10 @@ public class AshramVisitsApp {
                             "Samyama_Number__c, Samyama_Number_Tag_Tray_Location__c, Samyama_Valuables_Collected__c, " +
                             "Samyama_Waiver_Signed__c " +
                             "FROM Ashram_Visit_information__c " +
-                            "WHERE Program__c = '" + programId + "'";
+                            "WHERE Program__c = '" + programId + "' " +
+                            "AND Check_Out_Date__c >= " + DAY_BEFORE_PROGRAM_END +
+                            " AND Visit_Date__c <= " + DAY_AFTER_PROGRAM_START;
+            log.info("About to run query: " + query);
             final QueryResult queryResult = connection.query(query);
             log.info("getAshramVisits query execution time (in ms): " + stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
